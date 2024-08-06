@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/lxzan/gws"
+	"github.com/lianyun0502/exchange_conn/v1"
 	"github.com/lianyun0502/exchange_conn/v1/common"
 )
 
@@ -15,8 +16,9 @@ type WsHandler func(message []byte)
 type WebSocketEvent struct{
 	Err_Handler func(err error)
 	Ws_Handler func(message []byte)
+	Close_Handler func()
 
-	client *WsClient
+	// client *WsClient
 
 	pingTimer common.Timer
 }
@@ -38,8 +40,8 @@ func (conn *WebSocketEvent) OnPing(socket *gws.Conn, message []byte) {
 }
 func (conn *WebSocketEvent) OnPong(socket *gws.Conn, message []byte) {
 	log.Println("OnPong")
-	conn.pingTimer.Stop()
 	go func () {
+		conn.pingTimer.Stop()
 		time.Sleep(5*time.Second)
 		socket.WritePing([]byte("ping"))
 		conn.pingTimer.Start(nil)
@@ -59,37 +61,37 @@ func (conn *WebSocketEvent) OnClose(socket *gws.Conn, err error) {
 	if err != nil {
 		conn.Err_Handler(err)
 	}
-	conn.client.ReconnectSignal <- struct{}{}
+	conn.Close_Handler()
 }
 
-type WsClient struct {
-	clientOption *gws.ClientOption
-	wsEvent gws.Event
-	conn *gws.Conn
-	DoneSignal chan struct{}
- 	stopSignal chan struct{}
-	ReconnectSignal chan struct{}
-}
+// type WsClient struct {
+// 	clientOption *gws.ClientOption
+// 	wsEvent gws.Event
+// 	conn *gws.Conn
+// 	DoneSignal chan struct{}
+//  	stopSignal chan struct{}
+// 	ReconnectSignal chan struct{}
+// }
 
-func (client *WsClient) Reconnect() (err error) {
-	client.conn, _, err = gws.NewClient(client.wsEvent, client.clientOption)
-	if err == nil{
-		client.StartLoop()
-	}
-	return
-}
+// func (client *WsClient) Reconnect() (err error) {
+// 	client.conn, _, err = gws.NewClient(client.wsEvent, client.clientOption)
+// 	if err == nil{
+// 		client.StartLoop()
+// 	}
+// 	return
+// }
 
-func (client *WsClient) StartLoop() {
-	go func() {
-		client.conn.ReadLoop()
-	}()
-}
-func (client *WsClient) Close() {
-	client.stopSignal <- struct{}{}
-}
+// func (client *WsClient) StartLoop() {
+// 	go func() {
+// 		client.conn.ReadLoop()
+// 	}()
+// }
+// func (client *WsClient) Close() {
+// 	client.stopSignal <- struct{}{}
+// }
 
-func NewWsClient(url string, wsEvent *WebSocketEvent) (client *WsClient, err error){
-	clientOption := gws.ClientOption{
+func NewWsClient(url string, wsEvent *WebSocketEvent) (client *exchange_conn.WsClient, err error){
+	clientOption := &gws.ClientOption{
 		ReadBufferSize: 655350,
 		Addr : url,
 		HandshakeTimeout: 45*time.Second,
@@ -102,28 +104,18 @@ func NewWsClient(url string, wsEvent *WebSocketEvent) (client *WsClient, err err
 	
 	conn, _, err := gws.NewClient(
 		wsEvent,
-		&clientOption,
+		clientOption,
 	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	client = &WsClient{
-		clientOption: &clientOption,
-		wsEvent: wsEvent,
-		conn: conn,
-		DoneSignal: make(chan struct{}),
-		stopSignal: make(chan struct{}),
-		ReconnectSignal: make(chan struct{}),
+	client = &exchange_conn.WsClient{
+		ClientOption: clientOption,
+		WsEvent: wsEvent,
+		Conn: conn,
 	}
-	wsEvent.client = client
 
-	go func() {
-		<-client.stopSignal
-		client.conn.NetConn().Close()
-		client.DoneSignal <- struct{}{}
-	}()
-
-	return
+	return client, nil
 }

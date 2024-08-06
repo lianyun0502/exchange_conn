@@ -13,7 +13,7 @@ import (
 	"github.com/lianyun0502/exchange_conn/v1/common"
 )
 
-func TestExchangePing(t *testing.T) {
+func TestBinancePing(t *testing.T) {
 	client := binance_conn.NewClient(
 		"",
 		"",
@@ -30,7 +30,7 @@ func TestExchangePing(t *testing.T) {
 	assert.Equal(t, string(data), "{}")
 }
 
-func TestExchangeGetInfo(t *testing.T) {
+func TestBinanceGetInfo(t *testing.T) {
 	client := binance_conn.NewClient(
 		"",
 		"",
