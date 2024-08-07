@@ -22,22 +22,15 @@ var BaseURL = [6]string{
 }
 
 
-// Endpoint security type
-// - If no security type is stated, assume the security type is NONE.
-// - API-keys are passed into the Rest API via the X-MBX-APIKEY header.
-// - API-keys and secret-keys are case sensitive.
-// - API-keys can be configured to only access certain types of secure endpoints.
-// 		For example, one API-key could be used for TRADE only,
-//  	while another API-key can access everything except for TRADE routes.
-// - By default, API-keys can access all secure routes.
-type SecurityT int
-const (
-	None SecurityT = iota // all public access
-	Trade // API-key and Singnature required
-	UserData // API-key and Singnature required
-	UserStream // API-key required
-	MARKET_DATA // API-key required
-)
+
+// type SecurityT int
+// const (
+// 	None SecurityT = iota // all public access
+// 	Trade // API-key and Singnature required
+// 	UserData // API-key and Singnature required
+// 	UserStream // API-key required
+// 	MARKET_DATA // API-key required
+// )
 
 type Client struct {
 	APIKey     string // API key

@@ -8,8 +8,9 @@ import (
 
 	// "github.com/stretchr/testify/assert"
 	"github.com/lianyun0502/exchange_conn/v1/binance_conn"
+	"github.com/lianyun0502/exchange_conn/v1/bybit_conn"
 	"github.com/lianyun0502/exchange_conn/v1"
-	// "github.com/lianyun0502/exchange_conn/v1/common"
+
 )
 
 
@@ -26,36 +27,52 @@ func errorHandler(err error) {
 
 func TestBinanceData(t *testing.T) {
 	// url := "wss://stream.binance.com:9443/ws/btcusdt@depth@100ms"
-	// url := "wss://stream.binance.com:9443/ws/btcusdt@aggTrade"
-	url := "wss://ws-api.binance.com:443/ws-api/v3"
+	url := "wss://stream.binance.com:443/ws"
+	// url := "wss://ws-api.binance.com:443/ws-api/v3"
 	// url := "wss://stream.binance.com:9443/stream?streams=btcusdt@trade/btcusdt@aggTrade"
 
-	wsEvent := &binance_conn.WebSocketEvent{
-		Err_Handler: errorHandler,
-		Ws_Handler: wsHandler,
-	}
+	agent := exchange_conn.NewWebSocketAgent(binance_conn.NewWsClient(
+		wsHandler,
+		errorHandler,
+		10,
+	))
 
-	client, err := binance_conn.NewWsClient(
-		url, 
-		wsEvent,
-	)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	
-	agent := exchange_conn.NewWebSocketAgent(client, 5)
-	wsEvent.Close_Handler = func() {
-		agent.AddEvent(&exchange_conn.Event{
-			Name: "reconnect",
-			IsBlock: true,
-			Handler: agent.Reconnect,
-		})
-	}
-	defer agent.Stop()
-	agent.Start()
+	agent.Client.Connect(url)
 
-	
-	<-agent.DoneSignal
+	go agent.Client.StartLoop()
+
+	agent.Client.Send([]byte(`{"method": "SUBSCRIBE","params": ["btcusdt@depth@100ms"],"id": 1}`))
+
+	go func() {
+		time.Sleep(60*time.Second)
+		agent.Client.Stop()
+	}()
+
+	<- agent.Client.DoneSignal
 }
+
+func TestBybitData(t *testing.T) {
+	url := "wss://stream.bybit.com/v5/public/spot"
+
+
+	agent := exchange_conn.NewWebSocketAgent(bybit_conn.NewWsClient(
+		wsHandler,
+		errorHandler,
+		10,
+	))
+
+	agent.Client.Connect(url)
+
+	go agent.Client.StartLoop()
+
+	agent.Client.Send([]byte(`{"req_id": "test","op":"subscribe","args":["orderbook.1.BTCUSDT"]}`))
+
+	go func() {
+		time.Sleep(1*time.Second)
+		agent.Client.Stop()
+	}()
+
+	<- agent.Client.DoneSignal
+}
+
 	

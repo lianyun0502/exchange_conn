@@ -13,7 +13,16 @@ type Event struct{
 type EventEngine struct {
 	eventQueue chan *Event
 	StopSignal chan struct{}
+	Events map[string][]func()
 }
+
+func NewEventEngine() *EventEngine {
+	return &EventEngine{
+		StopSignal: make(chan struct{}),
+		Events: make(map[string][]func()),
+	}
+}
+
 
 func (e *EventEngine) AddEvent(event *Event) {
 	e.eventQueue <- event
@@ -26,6 +35,7 @@ func (e *EventEngine) Luanch() {
 			event := <- e.eventQueue
 			log.Printf("Event: name=%s", event.Name)
 			if event.Name == "exit" {
+				e.StopSignal <- struct{}{}
 				return
 			}
 			if event.IsBlock {
@@ -35,9 +45,9 @@ func (e *EventEngine) Luanch() {
 			}
 		}
 	}()
+	
 }
 
 func (e *EventEngine) Stop() {
 	e.eventQueue <- &Event{Name: "exit"}
-	e.StopSignal <- struct{}{}
 }

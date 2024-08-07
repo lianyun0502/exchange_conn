@@ -5,12 +5,19 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	// "fmt"
 	"reflect"
-    "time"
+	"time"
 
 	"github.com/google/uuid"
 )
 
+func GetCurrentTime() int64 {
+	now := time.Now()
+	unixNano := now.UnixNano()
+	timeStamp := unixNano / int64(time.Millisecond)
+	return timeStamp
+}
 
 func PrettyPrint(i interface{}) string {
 	s, _ := json.MarshalIndent(i, "", "  ")
@@ -52,32 +59,36 @@ type Timer struct {
 	Interval time.Duration
 	Handler func()
 
-	stop chan struct{}
-	reset chan struct{}
+	stop chan *struct{}
+	reset chan *struct{}
 }
 func (hbt *Timer) Start(handle func()) {
+	// fmt.Println("Timer started")
 	if handle != nil {
 		hbt.Handler = handle
 	}
-	hbt.stop = make(chan struct{})
-	hbt.reset = make(chan struct{})
+	hbt.stop = make(chan *struct{})
+	hbt.reset = make(chan *struct{})
 	go func() {
 		for {
 			select {
+            case <-hbt.stop:
+                // fmt.Println("Timer stopped")
+				return
             case <-time.After(hbt.Interval):
                 hbt.Handler()
-            case <-hbt.stop:
-                return
-			case <-hbt.reset:
-				continue
+            case <-hbt.reset:
+				// fmt.Println("Timer reset")
+                continue
+                
             }
 		}
 	}()
 }
 func (hbt *Timer) Stop() {
-	hbt.stop <- struct{}{}
+	hbt.stop <- &struct{}{}
 }	
 
 func (hbt *Timer) Reset() {
-	hbt.reset <- struct{}{}
+	hbt.reset <- &struct{}{}
 }

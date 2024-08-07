@@ -15,6 +15,8 @@ type IExchange interface {
 type IRequest interface {
 	SetQuery(key string, value interface{}) (IRequest)
 	SetParam(key string, value interface{}) (IRequest)
+	SetQueries(map[string]interface{}) (IRequest)
+	SetParams(map[string]interface{}) (IRequest)
 }
 
 
@@ -34,13 +36,23 @@ func (a *APIAgent) Request(method string, endpoint string, key bool, signed bool
 	return a
 }
 
-func (a *APIAgent) SetQuery(key string, value interface{}) *APIAgent {
+func (a *APIAgent) SetQuery(key string, value any) *APIAgent {
 	a.request.SetQuery(key, value)
 	return a
 }
 
-func (a *APIAgent) SetParam(key string, value interface{}) *APIAgent {
+func (a *APIAgent) SetQueries(params map[string]any) *APIAgent {
+	a.request.SetQueries(params)
+	return a
+}
+
+func (a *APIAgent) SetParam(key string, value any) *APIAgent {
 	a.request.SetParam(key, value)
+	return a
+}
+
+func (a *APIAgent) SetParams(params map[string]any) *APIAgent {
+	a.request.SetParams(params)
 	return a
 }
 

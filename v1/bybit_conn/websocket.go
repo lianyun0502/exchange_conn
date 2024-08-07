@@ -1,4 +1,4 @@
-package binance_conn
+package bybit_conn
 
 import (
 	// "fmt"
@@ -76,6 +76,7 @@ type WsClient struct {
 	ApiKey   string
 	SecretKey   string
 	reconnTimes int
+	maxAliveTime string
 	eventLoop *exchange_conn.EventEngine
 
 	DoneSignal chan struct{}
@@ -153,6 +154,11 @@ func (wsc *WsClient) Reconnect() {
 }
 
 func (wsc *WsClient) Connect(url string) (err error) {
+
+	if wsc.maxAliveTime != "" {
+		url += "?max_alive_time=" + wsc.maxAliveTime
+	}
+
 	wsc.ClientOption = &gws.ClientOption{
 		ReadBufferSize:   655350,
 		Addr:             url,

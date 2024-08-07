@@ -1,4 +1,4 @@
-package binance_conn
+package bybit_conn
 
 import (
 	"fmt"
@@ -39,10 +39,10 @@ type Request struct {
 	Body  io.Reader
 	Query url.Values // query string
 	Form  url.Values // extually is form data, covert to body in the end
-	// header   http.Header
+	recvWindow string
 }
 
-func NewBinanceRequest(method, endpoint string, sercType SecurityT) *Request {
+func NewByBitRequest(method, endpoint string, sercType SecurityT) *Request {
 	return &Request{
 		Method:   method,
 		Endpoint: endpoint,
@@ -83,4 +83,4 @@ func (r *Request) SetParams(params map[string]interface{}) exchange_conn.IReques
 	return r
 }
 
-type RequsetOption func(*url.Values)
+type RequestOption func(*Request)
