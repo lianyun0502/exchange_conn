@@ -41,10 +41,10 @@ func TestBinanceData(t *testing.T) {
 
 	go agent.Client.StartLoop()
 
-	agent.Client.Send([]byte(`{"method": "SUBSCRIBE","params": ["btcusdt@depth@100ms"],"id": 1}`))
+	agent.Client.Send([]byte(`{"method": "SUBSCRIBE","params": ["btcusdt@trade", "btcusdt@aggTrade", "btcusdt@depth@100ms"],"id": 1}`))
 
 	go func() {
-		time.Sleep(60*time.Second)
+		time.Sleep(10*time.Second)
 		agent.Client.Stop()
 	}()
 
