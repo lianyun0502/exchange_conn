@@ -21,8 +21,6 @@ var BaseURL = [6]string{
 	"https://api4.binance.com",
 }
 
-
-
 // type SecurityT int
 // const (
 // 	None SecurityT = iota // all public access
@@ -36,7 +34,7 @@ type Client struct {
 	APIKey     string // API key
 	SecretKey  string // Secret key
 	BaseURL    string // Base URL for API requests
-	HTTPClient *http.Client 
+	HTTPClient *http.Client
 }
 
 // Client factory function
@@ -54,11 +52,11 @@ func NewClient(apiKey, secretKey, baseURL string) *Client {
 }
 func (c *Client) Request(method, endpoint string, key, signed bool, opts ...any) exchange_conn.IRequest {
 	sercType := None
-	switch{
-		case key && signed:
-			sercType = Trade
-		case key && !signed:
-			sercType = UserStream
+	switch {
+	case key && signed:
+		sercType = Trade
+	case key && !signed:
+		sercType = UserStream
 	}
 	req := NewBinanceRequest(method, endpoint, sercType)
 	return req
@@ -71,7 +69,7 @@ func (c *Client) SetRequest(r exchange_conn.IRequest) (req *http.Request, err er
 
 func (c *Client) setBinanceRequest(r *Request, opts ...RequsetOption) (req *http.Request, err error) {
 	if r.SercType == Trade || r.SercType == UserData {
-		r.Query.Set("timestamp", fmt.Sprintf("%v",time.Now().UnixNano()/int64(time.Millisecond)))
+		r.Query.Set("timestamp", fmt.Sprintf("%v", time.Now().UnixNano()/int64(time.Millisecond)))
 	}
 
 	bodyString := r.Form.Encode()
@@ -81,7 +79,7 @@ func (c *Client) setBinanceRequest(r *Request, opts ...RequsetOption) (req *http
 		r.Body = bytes.NewBufferString(bodyString)
 	}
 	if r.SercType == Trade || r.SercType == UserData {
-		r.Query.Set("signature", common.GetSignature(c.SecretKey, fmt.Sprintf("%s%s",queryString, bodyString)))
+		r.Query.Set("signature", common.GetSignature(c.SecretKey, fmt.Sprintf("%s%s", queryString, bodyString)))
 		queryString = r.Query.Encode()
 	}
 
@@ -100,7 +98,7 @@ func (c *Client) setBinanceRequest(r *Request, opts ...RequsetOption) (req *http
 	if r.SercType != None {
 		req.Header.Set("X-MBX-APIKEY", c.APIKey)
 	}
-	return 
+	return
 }
 
 func (c *Client) Call(r *http.Request) (data []byte, err error) {
@@ -112,7 +110,6 @@ func (c *Client) Call(r *http.Request) (data []byte, err error) {
 	defer func() {
 		err = resp.Body.Close()
 	}()
-
 
 	if resp.StatusCode != 200 {
 		log.Printf("Error: %s", resp.Status)

@@ -25,7 +25,7 @@ type WebSocketEvent struct {
 
 func (conn *WebSocketEvent) OnOpen(socket *gws.Conn) {
 	log.Println("OnOpen")
-	conn.isClosed =false
+	conn.isClosed = false
 	conn.pingTimer = common.Timer{
 		Interval: 10 * time.Second,
 		Handler: func() {
@@ -45,7 +45,7 @@ func (conn *WebSocketEvent) OnPong(socket *gws.Conn, message []byte) {
 	go func() {
 		time.Sleep(5 * time.Second)
 		socket.WritePing([]byte("ping"))
-		conn.pingTimer.Reset()	
+		conn.pingTimer.Reset()
 	}()
 }
 func (conn *WebSocketEvent) OnMessage(socket *gws.Conn, message *gws.Message) {
@@ -58,7 +58,7 @@ func (conn *WebSocketEvent) OnMessage(socket *gws.Conn, message *gws.Message) {
 }
 func (conn *WebSocketEvent) OnClose(socket *gws.Conn, err error) {
 	log.Println("OnClose")
-	conn.isClosed =true
+	conn.isClosed = true
 	conn.pingTimer.Stop()
 	if conn.Err_Handler == nil {
 		return
@@ -71,20 +71,21 @@ func (conn *WebSocketEvent) OnClose(socket *gws.Conn, err error) {
 type WsClient struct {
 	WebSocketEvent
 	ClientOption *gws.ClientOption
-	Conn *gws.Conn
+	Conn         *gws.Conn
 
-	ApiKey   string
+	ApiKey      string
 	SecretKey   string
 	reconnTimes int
-	eventLoop *exchange_conn.EventEngine
+	eventLoop   *exchange_conn.EventEngine
 
 	DoneSignal chan struct{}
 }
+
 // override the OnClose method
-func (wsc *WsClient) OnClose(socket *gws.Conn, err error){
+func (wsc *WsClient) OnClose(socket *gws.Conn, err error) {
 	wsc.WebSocketEvent.OnClose(socket, err)
 	wsc.AddEvent(&exchange_conn.Event{
-		Name: "reconnect",
+		Name:    "reconnect",
 		Handler: wsc.Reconnect,
 		IsBlock: true,
 	})
@@ -100,7 +101,7 @@ func (wsc *WsClient) StartLoop() {
 
 func (wsc *WsClient) Stop() (err error) {
 	wsc.eventLoop.Stop()
-	if !wsc.isClosed{
+	if !wsc.isClosed {
 		err = wsc.Conn.NetConn().Close()
 		if err != nil {
 			return
@@ -116,34 +117,34 @@ func (wsc *WsClient) Send(msg []byte) {
 
 func (wsc *WsClient) Reconnect() {
 	log.Printf("reconnect")
-	if wsc.reconnTimes < 0{
+	if wsc.reconnTimes < 0 {
 		for {
 			conn, _, err := gws.NewClient(wsc, wsc.ClientOption)
 			wsc.Conn = conn
-			if err == nil{
+			if err == nil {
 				wsc.AddEvent(&exchange_conn.Event{
-					Name: "restart",
+					Name:    "restart",
 					IsBlock: false,
 					Handler: wsc.StartLoop,
 				})
 
-			}	
+			}
 		}
 	} else {
 		for i := 0; i < wsc.reconnTimes; i++ {
 			log.Printf("reconnect times {%d}", i+1)
 			conn, _, err := gws.NewClient(wsc, wsc.ClientOption)
 			wsc.Conn = conn
-			if err == nil{
+			if err == nil {
 				wsc.AddEvent(&exchange_conn.Event{
-					Name: "restart",
+					Name:    "restart",
 					IsBlock: false,
 					Handler: wsc.StartLoop,
 				})
-			return
+				return
 			}
 		}
-	} 
+	}
 	// wsc.AddEvent(&exchange_conn.Event{
 	// 	Name: "reconnect fail",
 	// 	IsBlock: true,
@@ -180,17 +181,11 @@ func NewWsClient(messageHandle WsHandler, errHandle ErrHandler, reconnectTimes i
 	engine.Luanch()
 	return &WsClient{
 		reconnTimes: reconnectTimes,
-		eventLoop: engine,
+		eventLoop:   engine,
 		WebSocketEvent: WebSocketEvent{
 			Err_Handler: errHandle,
-			Ws_Handler: messageHandle,
+			Ws_Handler:  messageHandle,
 		},
 		DoneSignal: make(chan struct{}),
 	}
-}
-
-type Object exchange_conn.TestObject
-
-func (t Object) Test() {
-	log.Println(" binance test ")
 }

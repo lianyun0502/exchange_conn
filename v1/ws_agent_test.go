@@ -1,18 +1,16 @@
 package exchange_conn_test
 
 import (
-	"testing"
-	"log"
 	"encoding/json"
+	"log"
+	"testing"
 	"time"
 
 	// "github.com/stretchr/testify/assert"
+	"github.com/lianyun0502/exchange_conn/v1"
 	"github.com/lianyun0502/exchange_conn/v1/binance_conn"
 	"github.com/lianyun0502/exchange_conn/v1/bybit_conn"
-	"github.com/lianyun0502/exchange_conn/v1"
-
 )
-
 
 func wsHandler(message []byte) {
 	log.Println(string(message))
@@ -26,53 +24,41 @@ func errorHandler(err error) {
 }
 
 func TestBinanceData(t *testing.T) {
-	// url := "wss://stream.binance.com:9443/ws/btcusdt@depth@100ms"
+
 	url := "wss://stream.binance.com:443/ws"
-	// url := "wss://ws-api.binance.com:443/ws-api/v3"
-	// url := "wss://stream.binance.com:9443/stream?streams=btcusdt@trade/btcusdt@aggTrade"
 
-	agent := exchange_conn.NewWebSocketAgent(binance_conn.NewWsClient(
-		wsHandler,
-		errorHandler,
-		10,
-	))
+	agent := exchange_conn.NewWebSocketAgent(binance_conn.NewWsClient(wsHandler, errorHandler, 10))
 
-	agent.Client.Connect(url)
+	agent.Connect(url)
 
-	go agent.Client.StartLoop()
+	go agent.StartLoop()
 
-	agent.Client.Send([]byte(`{"method": "SUBSCRIBE","params": ["btcusdt@trade", "btcusdt@aggTrade", "btcusdt@depth@100ms"],"id": 1}`))
+	agent.SendString(`{"method": "SUBSCRIBE","params": ["btcusdt@trade", "btcusdt@aggTrade", "btcusdt@depth@100ms"],"id": 1}`)
 
 	go func() {
-		time.Sleep(10*time.Second)
-		agent.Client.Stop()
+		time.Sleep(10 * time.Second)
+		agent.Stop()
 	}()
 
-	<- agent.Client.DoneSignal
+	<-agent.Client.DoneSignal
 }
 
 func TestBybitData(t *testing.T) {
+
 	url := "wss://stream.bybit.com/v5/public/spot"
 
+	agent := exchange_conn.NewWebSocketAgent(bybit_conn.NewWsClient(wsHandler, errorHandler, 10))
 
-	agent := exchange_conn.NewWebSocketAgent(bybit_conn.NewWsClient(
-		wsHandler,
-		errorHandler,
-		10,
-	))
+	agent.Connect(url)
 
-	agent.Client.Connect(url)
+	go agent.StartLoop()
 
-	go agent.Client.StartLoop()
-
-	agent.Client.Send([]byte(`{"req_id": "test","op":"subscribe","args":["orderbook.1.BTCUSDT"]}`))
+	agent.SendString(`{"req_id": "test","op":"subscribe","args":["orderbook.1.BTCUSDT"]}`)
 
 	go func() {
-		time.Sleep(1*time.Second)
-		agent.Client.Stop()
+		time.Sleep(1 * time.Second)
+		agent.Stop()
 	}()
 
-	<- agent.Client.DoneSignal
+	<-agent.Client.DoneSignal
 }
-
-	

@@ -195,8 +195,3 @@ func NewWsClient(messageHandle WsHandler, errHandle ErrHandler, reconnectTimes i
 	}
 }
 
-type Object exchange_conn.TestObject
-
-func (t Object) Test() {
-	log.Println(" binance test ")
-}
