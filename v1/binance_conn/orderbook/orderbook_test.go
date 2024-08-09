@@ -1,4 +1,4 @@
-package parser_test
+package orderbook_test
 
 import (
 	"encoding/json"
@@ -9,9 +9,18 @@ import (
 	"github.com/valyala/fastjson"
 
 	// "github.com/stretchr/testify/assert"
-	"github.com/lianyun0502/exchange_conn/v1/binance_conn/parser"
+	"github.com/lianyun0502/exchange_conn/v1/binance_conn/orderbook"
 )
 
+func TestFastJson(t *testing.T) {
+	v := fastjson.MustParse("[]")
+
+	a, _ := v.Array()
+	v.SetArrayItem(len(a), fastjson.MustParse("1"))
+	a, _ = v.Array()
+	v.SetArrayItem(len(a), fastjson.MustParse("2"))
+	fmt.Println(v.GetInt("0"))
+}
 
 
 
@@ -39,6 +48,7 @@ func TestDepthToSlice(t *testing.T) {
 		price:= ask.GetArray()[0].String()
 		fmt.Println(price)
 	}
+	assert.Equal(t, 49981777515, v.GetInt("U"))
 }
 
 func TestUpdateCurrentOrder(t *testing.T){
@@ -67,8 +77,8 @@ func TestUpdateCurrentOrder(t *testing.T){
 	var p fastjson.Parser
 
 	data, _ := p.Parse(rawData)
-	parser.UpdateCurrentOrder(data.GetArray("b"), bids)
-	parser.UpdateCurrentOrder(data.GetArray("a"), asks)
+	orderbook.UpdateCurrentOrder(data.GetArray("b"), bids)
+	orderbook.UpdateCurrentOrder(data.GetArray("a"), asks)
 
 	assert.Equal(t, "0.00096000", bids["57261.83000000"])
 	assert.Equal(t, "5.23762000", bids["57265.01000000"])
@@ -98,13 +108,13 @@ func TestUpdateCurrentOrder(t *testing.T){
 
 
 func TestOrderBook2Json(t *testing.T){
-	o := parser.OrderBook{}
+	o := orderbook.OrderBook{}
 	o.Bids = map[string]string{ "57261.83000000": "0.00096000", "57265.01000000": "5.23762000", }
 	o.Asks = map[string]string{ "57265.03000000": "0.03705000", "57266.71000000": "0.00010000", }
 	o.Time = 1723025111169
 	o.Symbol = "BTCUSDT"
 	o.Topic = "depthUpdate"
-	
+
 	b, _ := json.Marshal(o)
 
 	fmt.Println(string(b))

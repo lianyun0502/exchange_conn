@@ -1,4 +1,4 @@
-package parser
+package trade_stream
 
 import (
 	"encoding/json"
