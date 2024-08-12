@@ -112,10 +112,10 @@ func (c *Client) Call(r *http.Request) (data []byte, err error) {
 		err = resp.Body.Close()
 	}()
 
-	if resp.StatusCode != 200 {
-		log.Printf("Error: %s", resp.Status)
-		return
-	}
+	// if resp.StatusCode != 200 {
+	// 	log.Printf("Error: %s", resp.Status)
+	// 	return
+	// }
 
 	// log.Printf("response header: %s", PrettyPrint(resp.Header))
 
