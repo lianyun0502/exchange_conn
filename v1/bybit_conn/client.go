@@ -46,11 +46,11 @@ func (c *Client) Request(method, endpoint string, key, signed bool, opts ...any)
 	return req
 }
 
-func (c *Client) parseRequest(r *Request, opts ...RequestOption) (req *http.Request, err error) {
+func (c *Client) parseRequest(r *request) (req *http.Request, err error) {
 	// set request options from user
-	for _, opt := range opts {
-		opt(r)
-	}
+	// for _, opt := range opts {
+	// 	opt(r)
+	// }
 	// err = r.validate()
 	// if err != nil {
 	// 	return err

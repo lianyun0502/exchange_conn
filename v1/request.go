@@ -1,0 +1,114 @@
+package exchange_conn
+
+import (
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"encoding/json"
+)
+
+const (
+	Signed = 0b01
+	ApiKey = 0b10
+)
+
+// Endpoint security type
+//   - If no security type is stated, assume the security type is NONE.
+//   - API-keys are passed into the Rest API via the X-MBX-APIKEY header.
+//   - API-keys and secret-keys are case sensitive.
+//   - API-keys can be configured to only access certain types of secure endpoints.
+//     For example, one API-key could be used for TRADE only,
+//     while another API-key can access everything except for TRADE routes.
+//   - By default, API-keys can access all secure routes.
+type SecurityT int
+
+const (
+	None       SecurityT = 0               // all public access
+	Trade                = Signed | ApiKey // API-key and Singnature required
+	UserData             = Signed | ApiKey // API-key and Singnature required
+	UserStream           = ApiKey          // API-key required
+	MarketData           = ApiKey          // API-key required
+)
+
+type Params map[string]interface{}
+
+func (p *Params) Set(params map[string]interface{}) {
+	for k, v := range params {
+		(*p)[k] = v
+	}
+}
+
+func (p *Params) SetString(params string) {
+	j := make(map[string]interface{})
+	json.Unmarshal([]byte(params), &j)
+	p.Set(j)
+}
+
+func (p *Params) Add(key string, value interface{}) {
+	(*p)[key] = value
+}
+
+func (p *Params) Get(key string) any{
+	return (*p)[key]
+}
+
+func (p *Params) Encode() string {
+	data, _ := json.Marshal(p)
+	ret := string(data)
+	if ret == "{}" { return "" }
+	return string(data)
+}
+
+type Request struct {
+	Method   string    // http method
+	Endpoint string    // every api specific url
+
+	Body  io.Reader
+	Query url.Values // query string
+	Form  Params // extually is form data, covert to body in the end
+}
+
+func NewRequest(method, endpoint string) *Request {
+	return &Request{
+		Method:   method,
+		Endpoint: endpoint,
+		// SercType: sercType,
+
+		Query: make(url.Values),
+		Form:  make(Params),
+	}
+}
+
+func (r *Request) SetQuery(key string, value any) IRequest {
+	if r.Query.Get(key) == "" {
+		r.Query.Add(key, fmt.Sprintf("%v", value))
+		return r
+	}
+	r.Query.Set(key, fmt.Sprintf("%v", value))
+	return r
+}
+func (r *Request) SetQueries(params map[string]any) IRequest {
+	for k, v := range params {
+		r.SetQuery(k, v)
+	}
+	return r
+}
+func (r *Request) SetParam(key string, value any) IRequest {
+	if r.Method != http.MethodPost { return r }
+	r.Form.Add(key, fmt.Sprintf("%v", value))
+	return r
+}
+func (r *Request) SetParamsString(params string) IRequest {
+	if r.Method != http.MethodPost { return r }
+	r.Form.SetString(params)
+	return r
+}
+
+func (r *Request) SetParams(params map[string]interface{}) IRequest {
+	if r.Method != http.MethodPost { return r }
+	r.Form.Set(params)
+	return r
+}
+
+type RequsetOption[T IRequest] func(req T)

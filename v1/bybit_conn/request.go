@@ -1,8 +1,8 @@
 package bybit_conn
 
 import (
-	"fmt"
-	"io"
+	// "fmt"
+	// "io"
 	"net/url"
 
 	"github.com/lianyun0502/exchange_conn/v1"
@@ -31,56 +31,20 @@ const (
 	MARKET_DATA           = ApiKey          // API-key required
 )
 
-type Request struct {
-	Method   string    // http method
-	Endpoint string    // every api specific url
-	SercType SecurityT // security type
-
-	Body  io.Reader
-	Query url.Values // query string
-	Form  url.Values // extually is form data, covert to body in the end
+type request struct {
+	exchange_conn.Request
+	SercType   SecurityT // security type
 	recvWindow string
 }
 
-func NewByBitRequest(method, endpoint string, sercType SecurityT) *Request {
-	return &Request{
+func NewByBitRequest(method, endpoint string, sercType SecurityT) *request {
+	return &request{Request: exchange_conn.Request{
 		Method:   method,
 		Endpoint: endpoint,
-		SercType: sercType,
 
-		Query: url.Values{},
-		Form:  url.Values{},
-	}
+		Query: make(url.Values),
+		Form:  make(exchange_conn.Params),
+	},
+	SercType: sercType,
 }
-
-func (r *Request) SetQuery(key string, value interface{}) exchange_conn.IRequest {
-	if r.Query.Get(key) == "" {
-		r.Query.Add(key, fmt.Sprintf("%v", value))
-		return r
-	}
-	r.Query.Set(key, fmt.Sprintf("%v", value))
-	return r
 }
-func (r *Request) SetQueries(params map[string]interface{}) exchange_conn.IRequest {
-	for k, v := range params {
-		r.SetQuery(k, v)
-	}
-	return r
-}
-func (r *Request) SetParam(key string, value interface{}) exchange_conn.IRequest {
-	if r.Form.Get(key) == "" {
-		r.Form.Add(key, fmt.Sprintf("%v", value))
-		return r
-	}
-	r.Form.Set(key, fmt.Sprintf("%v", value))
-	return r
-}
-
-func (r *Request) SetParams(params map[string]interface{}) exchange_conn.IRequest {
-	for k, v := range params {
-		r.SetQuery(k, v)
-	}
-	return r
-}
-
-type RequestOption func(*Request)
