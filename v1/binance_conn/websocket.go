@@ -189,5 +189,6 @@ func NewWsClient(messageHandle WsHandler, errHandle ErrHandler, reconnectTimes i
 			Ws_Handler:  messageHandle,
 		},
 		DoneSignal: make(chan struct{}),
+		StartSignal: make(chan struct{}),
 	}
 }
