@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/lianyun0502/exchange_conn/v1"
 	"github.com/lianyun0502/exchange_conn/v1/common"
 )
 
@@ -51,7 +50,7 @@ func NewClient(apiKey, secretKey, baseURL string) *Client {
 	}
 }
 
-func (c *Client) Request(method, endpoint string, key, signed bool, opts ...any) exchange_conn.IRequest {
+func (c *Client) Request(method, endpoint string, key, signed bool, opts ...any) *request {
 	sercType := None
 	switch {
 	case key && signed:
@@ -63,12 +62,7 @@ func (c *Client) Request(method, endpoint string, key, signed bool, opts ...any)
 	return req
 }
 
-func (c *Client) SetRequest(r exchange_conn.IRequest) (req *http.Request, err error) {
-	r_ptr := r.(*request)
-	return c.setBinanceRequest(r_ptr)
-}
-
-func (c *Client) setBinanceRequest(r *request) (req *http.Request, err error) {
+func (c *Client) SetRequest(r *request) (req *http.Request, err error) {
 	if r.SercType == Trade || r.SercType == UserData {
 		r.Query.Set("timestamp", fmt.Sprintf("%v", time.Now().UnixNano()/int64(time.Millisecond)))
 	}

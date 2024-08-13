@@ -4,56 +4,56 @@ import (
 	"net/http"
 )
 
-type IExchange interface {
-	Request(string, string, bool, bool, ...any) IRequest
-	SetRequest(IRequest) (*http.Request, error)
+type IExchange [R IRequest] interface {
+	Request(string, string, bool, bool, ...any) R
+	SetRequest(R) (*http.Request, error)
 	Call(*http.Request) ([]byte, error)
 }
 
 type IRequest interface {
-	SetQuery(key string, value interface{}) IRequest
-	SetParam(key string, value interface{}) IRequest
-	SetQueries(map[string]interface{}) IRequest
-	SetParams(map[string]interface{}) IRequest
+	SetQuery(key string, value interface{}) 
+	SetParam(key string, value interface{})
+	SetQueries(map[string]interface{}) 
+	SetParams(map[string]interface{}) 
 }
 
-type APIAgent[E IExchange] struct {
+type APIAgent[E IExchange[R], R IRequest] struct {
 	Client  E
-	request IRequest
+	request R
 }
 
-func NewAgent[E IExchange](client E) *APIAgent[E] {
-	return &APIAgent[E]{
+func NewAgent[E IExchange[R], R IRequest](client E) *APIAgent[E, R] {
+	return &APIAgent[E, R]{
 		Client: client,
 	}
 }
 
-func (a *APIAgent[E]) Request(method string, endpoint string, key bool, signed bool, args ...any) *APIAgent[E] {
-	a.request = a.Client.Request(method, endpoint, key, signed, args...)
+func (a *APIAgent[E, R]) Request(method string, endpoint string, key bool, signed bool, args ...RequsetOption[R]) *APIAgent[E, R] {
+	a.request = a.Client.Request(method, endpoint, key, signed, args)
 	return a
 }
 
-func (a *APIAgent[E]) SetQuery(key string, value any) *APIAgent[E] {
+func (a *APIAgent[E, R]) SetQuery(key string, value any) *APIAgent[E, R] {
 	a.request.SetQuery(key, value)
 	return a
 }
 
-func (a *APIAgent[E]) SetQueries(params map[string]any) *APIAgent[E] {
+func (a *APIAgent[E, R]) SetQueries(params map[string]any) *APIAgent[E, R] {
 	a.request.SetQueries(params)
 	return a
 }
 
-func (a *APIAgent[E]) SetParam(key string, value any) *APIAgent[E] {
+func (a *APIAgent[E, R]) SetParam(key string, value any) *APIAgent[E, R] {
 	a.request.SetParam(key, value)
 	return a
 }
 
-func (a *APIAgent[E]) SetParams(params map[string]any) *APIAgent[E] {
+func (a *APIAgent[E, R]) SetParams(params map[string]any) *APIAgent[E, R] {
 	a.request.SetParams(params)
 	return a
 }
 
-func (a *APIAgent[E]) Send() (data []byte, err error) {
+func (a *APIAgent[E, R]) Send() (data []byte, err error) {
 	req, err := a.Client.SetRequest(a.request)
 	if err != nil {
 		return

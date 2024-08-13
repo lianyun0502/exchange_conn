@@ -80,35 +80,33 @@ func NewRequest(method, endpoint string) *Request {
 	}
 }
 
-func (r *Request) SetQuery(key string, value any) IRequest {
+func (r *Request) SetQuery(key string, value any) {
 	if r.Query.Get(key) == "" {
 		r.Query.Add(key, fmt.Sprintf("%v", value))
-		return r
 	}
 	r.Query.Set(key, fmt.Sprintf("%v", value))
-	return r
+
 }
-func (r *Request) SetQueries(params map[string]any) IRequest {
+func (r *Request) SetQueries(params map[string]any) {
 	for k, v := range params {
 		r.SetQuery(k, v)
 	}
-	return r
+
 }
-func (r *Request) SetParam(key string, value any) IRequest {
-	if r.Method != http.MethodPost { return r }
+func (r *Request) SetParam(key string, value any)  {
+	if r.Method != http.MethodPost { return }
 	r.Form.Add(key, fmt.Sprintf("%v", value))
-	return r
+
 }
-func (r *Request) SetParamsString(params string) IRequest {
-	if r.Method != http.MethodPost { return r }
+func (r *Request) SetParamsString(params string)  {
+	if r.Method != http.MethodPost { return  }
 	r.Form.SetString(params)
-	return r
+	
 }
 
-func (r *Request) SetParams(params map[string]interface{}) IRequest {
-	if r.Method != http.MethodPost { return r }
+func (r *Request) SetParams(params map[string]interface{})  {
+	if r.Method != http.MethodPost { return  }
 	r.Form.Set(params)
-	return r
 }
 
-type RequsetOption[T IRequest] func(req T)
+type RequsetOption[T IRequest] func(req *T)
