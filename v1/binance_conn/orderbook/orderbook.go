@@ -135,3 +135,42 @@ func UpdateCurrentOrder(srcOrders []*fastjson.Value, curOrders map[string]string
 	}
 
 }
+
+
+type BinancePartialOrderBook struct {
+	LastUpdateID int64 `json:"lastUpdateId"`
+	Bids [][]string `json:"bids"`
+	Asks [][]string `json:"asks"`
+}
+
+func ToConsistentOrderBook(rawData []byte) (data *exchange_conn.OrderBookStream, err error) {
+	v, err := p.ParseBytes(rawData)
+	if err != nil {
+		return nil, err
+	}
+	bids := make(map[string]string)
+	asks := make(map[string]string)
+
+	bidsArray := v.GetArray("bids")
+	for i := 0; i < len(bidsArray); i++ {
+		price := string(bidsArray[i].GetStringBytes("0"))
+		quantity := string(bidsArray[i].GetStringBytes("1"))
+		bids[price] = quantity
+	}
+	asksArray := v.GetArray("asks")
+	for i := 0; i < len(asksArray); i++ {
+		price := string(asksArray[i].GetStringBytes("0"))
+		quantity := string(asksArray[i].GetStringBytes("1"))
+		asks[price] = quantity
+	}
+	
+
+	for i := 0; i < len(v.GetArray("bids")); i++ {
+
+		data = &exchange_conn.OrderBookStream{
+			Bids: bids,
+			Asks: asks,
+		}
+	}
+	return data, nil
+}

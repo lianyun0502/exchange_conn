@@ -119,3 +119,14 @@ func TestOrderBook2Json(t *testing.T){
 
 	fmt.Println(string(b))
 }
+
+func TestPartialOrderBookUpdate(t *testing.T){
+	rawData :=	`{"lastUpdateId":49981777515,"bids":[["57261.83000000","0.00096000"],["57265.01000000","5.23762000"]],"asks":[["57265.03000000","0.03705000"],["57266.71000000","0.00010000"]]}`
+	ob, _ := orderbook.ToConsistentOrderBook([]byte(rawData))
+
+	assert.Equal(t, ob.Bids["57261.83000000"], "0.00096000")
+	assert.Equal(t, ob.Bids["57265.01000000"], "5.23762000")
+	assert.Equal(t, ob.Asks["57265.03000000"], "0.03705000")
+	assert.Equal(t, ob.Asks["57266.71000000"], "0.00010000")
+
+}
