@@ -34,6 +34,8 @@ type Client struct {
 	SecretKey  string // Secret key
 	BaseURL    string // Base URL for API requests
 	HTTPClient *http.Client
+
+
 }
 
 // Client factory function

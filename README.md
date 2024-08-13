@@ -10,21 +10,60 @@ multiple crypto exchanges SDk
 
 
 ## Environment
-* go version: go version go1.22.6 linux/amd64
+* Go version: go version go1.22.6 linux/amd64
 * OS: Ubuntu Ubuntu 22.04.3 LTS
 
 ## Installation
-* git clone the repository
 
-```bash
-git clone https://github.com/lianyun0502/exchange_conn.git
-```
+there are two ways to install and use the package, one is to clone the repository and refer to local path and the other is to use the `go get` command set to `go.mod`.
 
-* install the package
+### Git clone the repository
 
-```bash
-go get github.com/lianyun0502/exchange_conn
-```
+1. first clone the repository into your project directory
+
+    ```bash
+    git clone https://github.com/lianyun0502/exchange_conn.git
+    ```
+
+    Your directory structure should look like this:
+
+    ```bash
+    your_project/
+    ├── exchange_conn/
+    ├── main.go
+    └── go.mod
+    ```
+    
+2. replace the import refernce with the path of the repository in your project.
+
+    ```bash
+    go mod edit -replace=github.com/lianyun0502/exchange_conn=../exchange_conn
+    ```
+
+3. import the package in your project
+
+    ```Go
+    import (
+        "github.com/lianyun0502/exchange_conn"
+        "github.com/lianyun0502/exchange_conn/v1/binance_conn"
+    )
+    ```
+
+### Install the package use `go get`
+
+1. use the `go get` command to install the package
+
+    ```bash
+    go get github.com/lianyun0502/exchange_conn
+    ```
+2. import the package in your project
+
+    ```Go
+    import (
+        "github.com/lianyun0502/exchange_conn"
+        "github.com/lianyun0502/exchange_conn/v1/binance_conn"
+    )
+    ```
 
 ## Example
 
@@ -86,7 +125,7 @@ go get github.com/lianyun0502/exchange_conn
     }
     ```
 
-* Exchange Websocket API (Binance)
+* Exchange Websocket stream (Binance)
 
     ``` Go
     package main

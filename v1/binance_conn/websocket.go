@@ -79,6 +79,7 @@ type WsClient struct {
 	eventLoop   *exchange_conn.EventEngine
 
 	DoneSignal chan struct{}
+	StartSignal chan struct{}
 }
 
 // override the OnClose method
@@ -96,6 +97,7 @@ func (wsc *WsClient) AddEvent(e *exchange_conn.Event) {
 }
 
 func (wsc *WsClient) StartLoop() {
+	wsc.StartSignal <- struct{}{}
 	wsc.Conn.ReadLoop()
 }
 
