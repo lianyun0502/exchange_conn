@@ -51,8 +51,9 @@ func NewClient(apiKey, secretKey, baseURL string) *Client {
 		HTTPClient: http.DefaultClient,
 	}
 }
+type RequestOptions func (*request) 
 
-func (c *Client) Request(method, endpoint string, key, signed bool, opts ...any) *request {
+func (c *Client) Request(method, endpoint string, key, signed bool, opts ...func(*request)) *request {
 	sercType := None
 	switch {
 	case key && signed:

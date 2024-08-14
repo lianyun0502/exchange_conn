@@ -47,3 +47,9 @@ func NewBinanceRequest(method, endpoint string, sercType SecurityT) *request {
 		SercType: sercType,
 	}
 }
+
+func WithTest(test string) func(*request) {
+	return func(r *request) {
+		r.Query.Set("test", test)
+	}
+}

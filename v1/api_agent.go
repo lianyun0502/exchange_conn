@@ -4,8 +4,12 @@ import (
 	"net/http"
 )
 
+type IRequsetOption[R IRequest] interface {
+	func(*R)
+}
+
 type IExchange [R IRequest] interface {
-	Request(string, string, bool, bool, ...any) R
+	Request(string, string, bool, bool, ...func(R)) R
 	SetRequest(R) (*http.Request, error)
 	Call(*http.Request) ([]byte, error)
 }
@@ -28,8 +32,8 @@ func NewAgent[E IExchange[R], R IRequest](client E) *APIAgent[E, R] {
 	}
 }
 
-func (a *APIAgent[E, R]) Request(method string, endpoint string, key bool, signed bool, args ...RequsetOption[R]) *APIAgent[E, R] {
-	a.request = a.Client.Request(method, endpoint, key, signed, args)
+func (a *APIAgent[E, R]) Request(method string, endpoint string, key bool, signed bool, reqOpts ...func(R)) *APIAgent[E, R] {
+	a.request = a.Client.Request(method, endpoint, key, signed, reqOpts...)
 	return a
 }
 

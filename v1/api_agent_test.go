@@ -14,6 +14,8 @@ import (
 	"github.com/lianyun0502/exchange_conn/v1/common"
 )
 
+
+
 func TestBinancePing(t *testing.T) {
 	agent := exchange_conn.NewAgent(binance_conn.NewClient("YourAPIKey", "YourSecretKey", "https://api.binance.com"))
 
@@ -67,8 +69,8 @@ func TestBinanceOrder(t *testing.T) {
 	req := agent.Request(http.MethodPost, "/api/v3/order", true, true)
 	req.SetQueries(map[string]any{
 		"symbol": "BTCUSDT",
-		"side": "BUY",
-		"type": "LIMIT",
+		"side": enums.Buy,
+		"type": enums.Limit,
 		"timeInForce": enums.GTC,
 		"quantity": 0.0001,
 		"price": "50000",

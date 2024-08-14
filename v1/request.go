@@ -108,5 +108,3 @@ func (r *Request) SetParams(params map[string]interface{})  {
 	if r.Method != http.MethodPost { return  }
 	r.Form.Set(params)
 }
-
-type RequsetOption[T IRequest] func(req *T)
