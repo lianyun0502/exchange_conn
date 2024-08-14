@@ -3,31 +3,32 @@ package binance_conn
 import (
 	// "fmt"
 	"encoding/json"
-	"log"
-	"time"
+	// "log"
 	"errors"
+	"time"
 
-	"github.com/lxzan/gws"
 	"github.com/lianyun0502/exchange_conn/v1/common"
+	"github.com/lxzan/gws"
+	log "github.com/sirupsen/logrus"
 )
 
 type WsAPIErrorResponse struct {
-	ID string `json:"id"`
-	Code int `json:"code"`
-	Msg string `json:"msg"`
+	ID   string `json:"id"`
+	Code int    `json:"code"`
+	Msg  string `json:"msg"`
 }
 
 type WebSocketAPI struct {
-	APIKey     string // API key
-	SecretKey  string // Secret key
+	APIKey    string // API key
+	SecretKey string // Secret key
 
-	Connector *gws.Conn
+	Connector      *gws.Conn
 	DoneCh, StopCh chan struct{}
-	WriteCh chan []byte
-	resp_handlers map[string]chan []byte
+	WriteCh        chan []byte
+	resp_handlers  map[string]chan []byte
 }
 
-func (ws *WebSocketAPI) StartLoop(){
+func (ws *WebSocketAPI) StartLoop() {
 	go ws.Connector.ReadLoop()
 
 	go func() { // write loop
@@ -41,20 +42,20 @@ func (ws *WebSocketAPI) StartLoop(){
 	}()
 }
 
-func (ws *WebSocketAPI) StopLoop(){
+func (ws *WebSocketAPI) StopLoop() {
 	ws.Connector.NetConn().Close()
 }
-func (ws *WebSocketAPI) SendMessage(id string, resp_chan chan []byte, data []byte){
+func (ws *WebSocketAPI) SendMessage(id string, resp_chan chan []byte, data []byte) {
 	ws.resp_handlers[id] = resp_chan
 	ws.WriteCh <- data
 }
 
 type WsApiPingResponse struct {
-	ID string `json:"id"`
+	ID     string `json:"id"`
 	Method string `json:"method"`
 }
 
-func (ws *WebSocketAPI) PingServer() (resp interface{}, err error){
+func (ws *WebSocketAPI) PingServer() (resp interface{}, err error) {
 	res := &WsApiPingResponse{ID: common.GetUUID(), Method: "ping"}
 	respCh := make(chan []byte)
 
@@ -62,7 +63,7 @@ func (ws *WebSocketAPI) PingServer() (resp interface{}, err error){
 
 	ws.SendMessage(res.ID, respCh, data)
 
-	data = <- respCh
+	data = <-respCh
 
 	err = json.Unmarshal(data, &resp)
 	if err != nil {
@@ -71,7 +72,6 @@ func (ws *WebSocketAPI) PingServer() (resp interface{}, err error){
 	}
 	return
 }
-
 
 type WebSocketAPIEvent struct {
 	Err_Handler   func(err error)
@@ -137,12 +137,12 @@ func NewWebSocketAPI(apiKey, secretKey, url string, errHandler ErrHandler) (ws *
 		return nil, err
 	}
 	ws = &WebSocketAPI{
-		APIKey: apiKey,
-		SecretKey: secretKey,
-		Connector: conn,
-		DoneCh: make(chan struct{}),
-		StopCh: make(chan struct{}),
-		WriteCh: make(chan []byte),
+		APIKey:        apiKey,
+		SecretKey:     secretKey,
+		Connector:     conn,
+		DoneCh:        make(chan struct{}),
+		StopCh:        make(chan struct{}),
+		WriteCh:       make(chan []byte),
 		resp_handlers: resp_handlers,
 	}
 	return ws, nil

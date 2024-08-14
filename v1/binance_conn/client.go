@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
+	// "log"
 	"net/http"
 	"time"
 
 	"github.com/lianyun0502/exchange_conn/v1/common"
+	log "github.com/sirupsen/logrus"
 )
 
 var BaseURL = [6]string{
@@ -35,6 +36,7 @@ type Client struct {
 	BaseURL    string // Base URL for API requests
 	HTTPClient *http.Client
 
+	Logger *log.Logger
 
 }
 
@@ -49,9 +51,9 @@ func NewClient(apiKey, secretKey, baseURL string) *Client {
 		SecretKey:  secretKey,
 		BaseURL:    url,
 		HTTPClient: http.DefaultClient,
+		Logger:     log.New(),
 	}
 }
-type RequestOptions func (*request) 
 
 func (c *Client) Request(method, endpoint string, key, signed bool, opts ...func(*request)) *request {
 	sercType := None
@@ -76,19 +78,22 @@ func (c *Client) SetRequest(r *request) (req *http.Request, err error) {
 	if bodyString != "" {
 		r.Body = bytes.NewBufferString(bodyString)
 	}
+	
 	if r.SercType == Trade || r.SercType == UserData {
 		r.Query.Set("signature", common.GetSignature(c.SecretKey, fmt.Sprintf("%s%s", queryString, bodyString)))
 		queryString = r.Query.Encode()
 	}
-
-	fullURL := fmt.Sprintf("%s%s?%s", c.BaseURL, r.Endpoint, queryString)
+	fullURL := fmt.Sprintf("%s%s", c.BaseURL, r.Endpoint)
+	if queryString != "" {
+		fullURL = fmt.Sprintf("%s?%s", fullURL, queryString)
+	}
+	c.Logger.Printf("full url: %s", fullURL)
+	c.Logger.Debugf("requese body: %s", common.PrettyPrint(r.Form))
 
 	req, err = http.NewRequest(r.Method, fullURL, r.Body)
 	if err != nil {
 		return
 	}
-	log.Printf("full url: %s\nrequese body: %s", req.URL.String(), common.PrettyPrint(r.Form))
-
 	req.Header.Set("User-Agent", fmt.Sprintf("%s/%s", "binance_connect", "v1"))
 	if bodyString != "" {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -102,21 +107,12 @@ func (c *Client) SetRequest(r *request) (req *http.Request, err error) {
 func (c *Client) Call(r *http.Request) (data []byte, err error) {
 	resp, err := c.HTTPClient.Do(r)
 	if err != nil {
-		log.Printf("Error: %s", err)
+		c.Logger.Errorf("Error: %s", err)
 		return
 	}
 	defer func() {
 		err = resp.Body.Close()
 	}()
 
-	// if resp.StatusCode != 200 {
-	// 	log.Printf("Error: %s", resp.Status)
-	// 	return
-	// }
-
-	// log.Printf("response header: %s", PrettyPrint(resp.Header))
-
-	data, err = io.ReadAll(resp.Body)
-
-	return data, err
+	return io.ReadAll(resp.Body)
 }

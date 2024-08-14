@@ -1,10 +1,9 @@
 package trade_stream_test
 
 import (
-	"testing"
-	"github.com/stretchr/testify/assert"
 	"github.com/lianyun0502/exchange_conn/v1/binance_conn/trade_stream"
-	
+	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestToNormalTradeData(t *testing.T) {

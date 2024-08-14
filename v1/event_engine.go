@@ -1,28 +1,28 @@
 package exchange_conn
 
-import "log"
+import log "github.com/sirupsen/logrus"
 
-type Event struct{
-	Name string
-	Data interface{}
+type Event struct {
+	Name    string
+	Data    interface{}
 	Handler func()
 	IsBlock bool
 }
 
-
 type EventEngine struct {
 	eventQueue chan *Event
 	StopSignal chan struct{}
-	Events map[string][]func()
+	Events     map[string][]func()
+	Logger     *log.Logger
 }
 
 func NewEventEngine() *EventEngine {
 	return &EventEngine{
 		StopSignal: make(chan struct{}),
-		Events: make(map[string][]func()),
+		Events:     make(map[string][]func()),
+		Logger:     log.New(),
 	}
 }
-
 
 func (e *EventEngine) AddEvent(event *Event) {
 	e.eventQueue <- event
@@ -30,10 +30,10 @@ func (e *EventEngine) AddEvent(event *Event) {
 
 func (e *EventEngine) Luanch() {
 	e.eventQueue = make(chan *Event, 100)
-	go func ()  {
+	go func() {
 		for {
-			event := <- e.eventQueue
-			log.Printf("Event: name=%s", event.Name)
+			event := <-e.eventQueue
+			log.WithFields(log.Fields{"Name": event.Name}).Info("Get Event")
 			if event.Name == "exit" {
 				e.StopSignal <- struct{}{}
 				return
@@ -45,7 +45,7 @@ func (e *EventEngine) Luanch() {
 			}
 		}
 	}()
-	
+
 }
 
 func (e *EventEngine) Stop() {

@@ -45,6 +45,6 @@ func NewByBitRequest(method, endpoint string, sercType SecurityT) *request {
 		Query: make(url.Values),
 		Form:  make(exchange_conn.Params),
 	},
-	SercType: sercType,
-}
+		SercType: sercType,
+	}
 }

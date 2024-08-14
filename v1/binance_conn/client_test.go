@@ -5,23 +5,21 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/lianyun0502/exchange_conn/v1/common"
 	"github.com/lianyun0502/exchange_conn/v1/binance_conn"
-	
+	"github.com/lianyun0502/exchange_conn/v1/common"
 )
 
 var (
-	apiKey = "xTz5GK0rSyPANKeQTR5o1zohOdF7DmPRGR2ReAFKNLj0GjoIacB2Ld5Sjzd2p8Wk"
+	apiKey    = "xTz5GK0rSyPANKeQTR5o1zohOdF7DmPRGR2ReAFKNLj0GjoIacB2Ld5Sjzd2p8Wk"
 	secretKey = "Hvsqtth66iAyXw7lnbzQGdw0ZCLPru5MWZPllLbcAuHpGMPNiuWoxXAE6LjpKqNg"
 	// testURL = "https://testnet.binance.vision"
 	testURL = "https://api1.binance.com"
 )
 
-
 func TestPingAPIServer(t *testing.T) {
 	client := binance_conn.NewClient(
-		apiKey, 
-		secretKey, 
+		apiKey,
+		secretKey,
 		testURL,
 	)
 
@@ -55,8 +53,8 @@ type CheckServerTimeResponce struct {
 
 func TestCheckServerTime(t *testing.T) {
 	client := binance_conn.NewClient(
-		apiKey, 
-		secretKey, 
+		apiKey,
+		secretKey,
 		testURL,
 	)
 
@@ -89,8 +87,8 @@ func TestCheckServerTime(t *testing.T) {
 
 func TestGetExchangeInfo(t *testing.T) {
 	client := binance_conn.NewClient(
-		apiKey, 
-		secretKey, 
+		apiKey,
+		secretKey,
 		testURL,
 	)
 

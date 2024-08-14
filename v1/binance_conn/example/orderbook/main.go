@@ -43,7 +43,7 @@ func main() {
 		"https://api.binance.com",
 	))
 
-	err := ws.Connect("wss://stream.binance.com:443/ws")
+	_, err := ws.Connect("wss://stream.binance.com:443/ws")
 	if err != nil {
 		log.Println(err)
 		return

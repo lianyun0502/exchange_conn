@@ -38,12 +38,12 @@ type request struct {
 
 func NewBinanceRequest(method, endpoint string, sercType SecurityT) *request {
 	return &request{Request: exchange_conn.Request{
-			Method:   method,
-			Endpoint: endpoint,
+		Method:   method,
+		Endpoint: endpoint,
 
-			Query: make(url.Values),
-			Form:  make(exchange_conn.Params),
-		},
+		Query: make(url.Values),
+		Form:  make(exchange_conn.Params),
+	},
 		SercType: sercType,
 	}
 }

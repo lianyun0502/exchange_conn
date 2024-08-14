@@ -1,11 +1,11 @@
 package binance_conn_test
 
 import (
+	"github.com/lianyun0502/exchange_conn/v1/binance_conn"
+	"github.com/lianyun0502/exchange_conn/v1/common"
+	"github.com/stretchr/testify/assert"
 	"log"
 	"testing"
-	"github.com/stretchr/testify/assert"
-	"github.com/lianyun0502/exchange_conn/v1/common"
-	"github.com/lianyun0502/exchange_conn/v1/binance_conn"
 )
 
 var errHandler = func(err error) {
@@ -18,7 +18,6 @@ var errHandler = func(err error) {
 // 	ID string `json:"id"`
 // 	Method string `json:"method"`
 // }
-
 
 func TestWsApiPing(t *testing.T) {
 	assert := assert.New(t)
@@ -39,7 +38,7 @@ func TestWsApiPing(t *testing.T) {
 			t.Error(err)
 			return
 		}
-		data :=  common.PrettyPrint(resp)
+		data := common.PrettyPrint(resp)
 		log.Printf("response:\n%s", data)
 		assert.NotEqual("{}", data)
 	}

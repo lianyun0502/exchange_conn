@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/lianyun0502/exchange_conn/v1/common"
 	"github.com/lianyun0502/exchange_conn/v1"
+	"github.com/lianyun0502/exchange_conn/v1/common"
 )
 
 // Client define API client
@@ -40,8 +40,12 @@ func NewClient(apiKey, secretKey, baseURL string) *Client {
 
 func (c *Client) Request(method, endpoint string, key, signed bool, opts ...any) exchange_conn.IRequest {
 	sercType := None
-	if key {sercType &= 0b10}
-	if signed {sercType &= 0b01}
+	if key {
+		sercType &= 0b10
+	}
+	if signed {
+		sercType &= 0b01
+	}
 	req := NewByBitRequest(method, endpoint, sercType)
 	return req
 }
@@ -102,7 +106,7 @@ func (c *Client) parseRequest(r *request) (req *http.Request, err error) {
 	}
 	// c.debug("full url: %s, body: %s", fullURL, body)
 	// r.fullURL = fullURL
-	return 
+	return
 }
 func (c *Client) Call(req *http.Request, ctx context.Context) (data []byte, err error) {
 
@@ -121,7 +125,6 @@ func (c *Client) Call(req *http.Request, ctx context.Context) (data []byte, err 
 	defer func() {
 		err = resp.Body.Close()
 	}()
-
 
 	if resp.StatusCode != 200 {
 		log.Printf("Error: %s", resp.Status)

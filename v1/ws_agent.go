@@ -1,16 +1,12 @@
 package exchange_conn
 
-import (
-// "log"
-
-// "github.com/lxzan/gws"
-)
+import "net/http"
 
 type IWsClient interface {
 	AddEvent(e *Event)
 	Reconnect()
 	StartLoop()
-	Connect(string) error
+	Connect(string) (*http.Response, error)
 	Stop() error
 	Send([]byte)
 }
@@ -30,7 +26,7 @@ func (a *WebSocketAgent[T]) Send(msg []byte) {
 	a.Client.Send(msg)
 }
 
-func (a *WebSocketAgent[T]) Connect(url string) error {
+func (a *WebSocketAgent[T]) Connect(url string) (*http.Response, error) {
 	return a.Client.Connect(url)
 }
 

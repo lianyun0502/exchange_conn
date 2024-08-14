@@ -1,11 +1,11 @@
 package exchange_conn
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"encoding/json"
 )
 
 const (
@@ -49,24 +49,26 @@ func (p *Params) Add(key string, value interface{}) {
 	(*p)[key] = value
 }
 
-func (p *Params) Get(key string) any{
+func (p *Params) Get(key string) any {
 	return (*p)[key]
 }
 
 func (p *Params) Encode() string {
 	data, _ := json.Marshal(p)
 	ret := string(data)
-	if ret == "{}" { return "" }
+	if ret == "{}" {
+		return ""
+	}
 	return string(data)
 }
 
 type Request struct {
-	Method   string    // http method
-	Endpoint string    // every api specific url
+	Method   string // http method
+	Endpoint string // every api specific url
 
 	Body  io.Reader
 	Query url.Values // query string
-	Form  Params // extually is form data, covert to body in the end
+	Form  Params     // extually is form data, covert to body in the end
 }
 
 func NewRequest(method, endpoint string) *Request {
@@ -93,18 +95,24 @@ func (r *Request) SetQueries(params map[string]any) {
 	}
 
 }
-func (r *Request) SetParam(key string, value any)  {
-	if r.Method != http.MethodPost { return }
+func (r *Request) SetParam(key string, value any) {
+	if r.Method != http.MethodPost {
+		return
+	}
 	r.Form.Add(key, fmt.Sprintf("%v", value))
 
 }
-func (r *Request) SetParamsString(params string)  {
-	if r.Method != http.MethodPost { return  }
+func (r *Request) SetParamsString(params string) {
+	if r.Method != http.MethodPost {
+		return
+	}
 	r.Form.SetString(params)
-	
+
 }
 
-func (r *Request) SetParams(params map[string]interface{})  {
-	if r.Method != http.MethodPost { return  }
+func (r *Request) SetParams(params map[string]interface{}) {
+	if r.Method != http.MethodPost {
+		return
+	}
 	r.Form.Set(params)
 }

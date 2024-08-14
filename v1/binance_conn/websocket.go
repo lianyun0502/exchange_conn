@@ -2,12 +2,14 @@ package binance_conn
 
 import (
 	// "fmt"
-	"log"
+	// "log"
+	"net/http"
 	"time"
 
 	"github.com/lianyun0502/exchange_conn/v1"
 	"github.com/lianyun0502/exchange_conn/v1/common"
 	"github.com/lxzan/gws"
+	log "github.com/sirupsen/logrus"
 )
 
 type ErrHandler func(err error)
@@ -21,15 +23,17 @@ type WebSocketEvent struct {
 	pingTimer common.Timer
 
 	isClosed bool
+
+	Logger *log.Logger
 }
 
 func (conn *WebSocketEvent) OnOpen(socket *gws.Conn) {
-	log.Println("OnOpen")
+	conn.Logger.Infoln("OnOpen")
 	conn.isClosed = false
 	conn.pingTimer = common.Timer{
 		Interval: 10 * time.Second,
 		Handler: func() {
-			log.Println("Ping server timeout")
+			conn.Logger.Warningln("Ping server timeout")
 			socket.NetConn().Close()
 		},
 	}
@@ -37,11 +41,11 @@ func (conn *WebSocketEvent) OnOpen(socket *gws.Conn) {
 	socket.WritePing([]byte("ping"))
 }
 func (conn *WebSocketEvent) OnPing(socket *gws.Conn, message []byte) {
-	log.Println("OnPing")
+	conn.Logger.Infoln("OnPing")
 	socket.WritePong(message)
 }
 func (conn *WebSocketEvent) OnPong(socket *gws.Conn, message []byte) {
-	log.Println("OnPong")
+	conn.Logger.Infoln("OnPong")
 	go func() {
 		time.Sleep(5 * time.Second)
 		socket.WritePing([]byte("ping"))
@@ -50,14 +54,14 @@ func (conn *WebSocketEvent) OnPong(socket *gws.Conn, message []byte) {
 }
 func (conn *WebSocketEvent) OnMessage(socket *gws.Conn, message *gws.Message) {
 	defer message.Close()
-	log.Println("OnMessage")
+	conn.Logger.Debugln("OnMessage")
 	if conn.Ws_Handler == nil {
 		return
 	}
 	conn.Ws_Handler(message.Data.Bytes())
 }
 func (conn *WebSocketEvent) OnClose(socket *gws.Conn, err error) {
-	log.Println("OnClose")
+	conn.Logger.Infoln("OnClose")
 	conn.isClosed = true
 	conn.pingTimer.Stop()
 	if conn.Err_Handler == nil {
@@ -78,7 +82,7 @@ type WsClient struct {
 	reconnTimes int
 	eventLoop   *exchange_conn.EventEngine
 
-	DoneSignal chan struct{}
+	DoneSignal  chan struct{}
 	StartSignal chan struct{}
 }
 
@@ -118,7 +122,7 @@ func (wsc *WsClient) Send(msg []byte) {
 }
 
 func (wsc *WsClient) Reconnect() {
-	log.Printf("reconnect")
+	wsc.Logger.Infoln("reconnect")
 	if wsc.reconnTimes < 0 {
 		for {
 			conn, _, err := gws.NewClient(wsc, wsc.ClientOption)
@@ -134,7 +138,7 @@ func (wsc *WsClient) Reconnect() {
 		}
 	} else {
 		for i := 0; i < wsc.reconnTimes; i++ {
-			log.Printf("reconnect times {%d}", i+1)
+			wsc.Logger.Infof("reconnect times {%d}", i+1)
 			conn, _, err := gws.NewClient(wsc, wsc.ClientOption)
 			wsc.Conn = conn
 			if err == nil {
@@ -147,15 +151,10 @@ func (wsc *WsClient) Reconnect() {
 			}
 		}
 	}
-	// wsc.AddEvent(&exchange_conn.Event{
-	// 	Name: "reconnect fail",
-	// 	IsBlock: true,
-	// 	Handler: func () {wsc.Stop()},
-	// })
 	go wsc.Stop()
 }
 
-func (wsc *WsClient) Connect(url string) (err error) {
+func (wsc *WsClient) Connect(url string) (resp *http.Response, err error) {
 	wsc.ClientOption = &gws.ClientOption{
 		ReadBufferSize:   655350,
 		Addr:             url,
@@ -167,19 +166,13 @@ func (wsc *WsClient) Connect(url string) (err error) {
 		},
 	}
 
-	conn, _, err := gws.NewClient(
-		wsc,
-		wsc.ClientOption,
-	)
-	if err != nil {
-		return err
-	}
-	wsc.Conn = conn
-	return
+	wsc.Conn, resp, err = gws.NewClient(wsc, wsc.ClientOption)
+	return resp, err
 }
 
 func NewWsClient(messageHandle WsHandler, errHandle ErrHandler, reconnectTimes int) (client *WsClient) {
 	engine := exchange_conn.NewEventEngine()
+	logger := engine.Logger
 	engine.Luanch()
 	return &WsClient{
 		reconnTimes: reconnectTimes,
@@ -187,8 +180,9 @@ func NewWsClient(messageHandle WsHandler, errHandle ErrHandler, reconnectTimes i
 		WebSocketEvent: WebSocketEvent{
 			Err_Handler: errHandle,
 			Ws_Handler:  messageHandle,
+			Logger:      logger,
 		},
-		DoneSignal: make(chan struct{}),
+		DoneSignal:  make(chan struct{}),
 		StartSignal: make(chan struct{}),
 	}
 }

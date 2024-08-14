@@ -8,17 +8,17 @@ type IRequsetOption[R IRequest] interface {
 	func(*R)
 }
 
-type IExchange [R IRequest] interface {
+type IExchange[R IRequest] interface {
 	Request(string, string, bool, bool, ...func(R)) R
 	SetRequest(R) (*http.Request, error)
 	Call(*http.Request) ([]byte, error)
 }
 
 type IRequest interface {
-	SetQuery(key string, value interface{}) 
+	SetQuery(key string, value interface{})
 	SetParam(key string, value interface{})
-	SetQueries(map[string]interface{}) 
-	SetParams(map[string]interface{}) 
+	SetQueries(map[string]interface{})
+	SetParams(map[string]interface{})
 }
 
 type APIAgent[E IExchange[R], R IRequest] struct {

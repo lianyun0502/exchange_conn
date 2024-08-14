@@ -37,7 +37,7 @@ func main() {
 		10,
 	)
 
-	err := ws.Connect("wss://stream.binance.com:9443/ws")
+	_, err := ws.Connect("wss://stream.binance.com:9443/ws")
 	if err != nil {
 		log.Println(err)
 		return

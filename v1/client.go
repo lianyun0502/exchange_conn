@@ -1,11 +1,10 @@
 package exchange_conn
 
 import (
-	"net/http"
-	"log"
 	"io"
+	"log"
+	"net/http"
 )
-
 
 type Client struct {
 	APIKey     string // API key

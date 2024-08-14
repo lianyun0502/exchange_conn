@@ -25,13 +25,20 @@ func errorHandler(err error) {
 
 func TestBinanceData(t *testing.T) {
 
-	url := "wss://stream.binance.com:443/ws"
+	url := "wss://stream.binance.com:9443/ws"
 
 	agent := exchange_conn.NewWebSocketAgent(binance_conn.NewWsClient(wsHandler, errorHandler, 10))
 
-	agent.Connect(url)
+	resp, err := agent.Connect(url)
+	if err != nil {
+		log.Println(resp)
+		t.Error(err)
+		return
+	}
 
 	go agent.StartLoop()
+
+	<-agent.Client.StartSignal
 
 	agent.SendString(`{"method": "SUBSCRIBE","params": ["btcusdt@trade", "btcusdt@aggTrade", "btcusdt@depth@100ms"],"id": 1}`)
 
@@ -41,6 +48,7 @@ func TestBinanceData(t *testing.T) {
 	}()
 
 	<-agent.Client.DoneSignal
+
 }
 
 func TestBybitData(t *testing.T) {
