@@ -33,7 +33,7 @@ func (e *EventEngine) Luanch() {
 	go func() {
 		for {
 			event := <-e.eventQueue
-			log.WithFields(log.Fields{"Name": event.Name}).Info("Get Event")
+			e.Logger.WithFields(log.Fields{"Name": event.Name}).Info("Get Event")
 			if event.Name == "exit" {
 				e.StopSignal <- struct{}{}
 				return
