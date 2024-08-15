@@ -19,6 +19,7 @@ import (
 
 func TestBinancePing(t *testing.T) {
 	agent := exchange_conn.NewAgent(binance_conn.NewClient("YourAPIKey", "YourSecretKey", "https://api.binance.com"))
+	agent.Client.Logger.SetLevel(log.DebugLevel)
 
 	data, err := agent.Request(http.MethodGet, "/api/v3/ping", false, false).Send()
 	if err != nil {

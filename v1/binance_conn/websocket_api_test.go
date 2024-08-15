@@ -8,6 +8,7 @@ import (
 	"testing"
 )
 
+
 var errHandler = func(err error) {
 	if err != nil {
 		log.Println(err)

@@ -17,10 +17,12 @@ type EventEngine struct {
 }
 
 func NewEventEngine() *EventEngine {
+	logger := log.New()
+	logger.SetFormatter(&log.TextFormatter{TimestampFormat: "2006-01-02 15:04:05.000000", FullTimestamp: true})
 	return &EventEngine{
 		StopSignal: make(chan struct{}),
 		Events:     make(map[string][]func()),
-		Logger:     log.New(),
+		Logger:     logger,
 	}
 }
 
@@ -33,7 +35,7 @@ func (e *EventEngine) Luanch() {
 	go func() {
 		for {
 			event := <-e.eventQueue
-			e.Logger.WithFields(log.Fields{"Name": event.Name}).Info("Get Event")
+			e.Logger.WithFields(log.Fields{"event": event.Name}).Info("Event")
 			if event.Name == "exit" {
 				e.StopSignal <- struct{}{}
 				return

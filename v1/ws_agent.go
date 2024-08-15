@@ -8,7 +8,7 @@ type IWsClient interface {
 	StartLoop()
 	Connect(string) (*http.Response, error)
 	Stop() error
-	Send([]byte)
+	Send([]byte) error
 }
 
 type WebSocketAgent[T IWsClient] struct {

@@ -26,7 +26,10 @@ type APIAgent[E IExchange[R], R IRequest] struct {
 	request R
 }
 
-func NewAgent[E IExchange[R], R IRequest](client E) *APIAgent[E, R] {
+func NewAgent[E IExchange[R], R IRequest](client E, opts ...func(E)) *APIAgent[E, R] {
+	for _, opt := range opts {
+		opt(client)
+	} 
 	return &APIAgent[E, R]{
 		Client: client,
 	}

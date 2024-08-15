@@ -147,3 +147,5 @@ func NewWebSocketAPI(apiKey, secretKey, url string, errHandler ErrHandler) (ws *
 	}
 	return ws, nil
 }
+
+type ErrHandler func(err error)

@@ -2,7 +2,7 @@ package exchange_conn_test
 
 import (
 	"encoding/json"
-	"log"
+	// "log"
 	"testing"
 	"time"
 
@@ -10,17 +10,18 @@ import (
 	"github.com/lianyun0502/exchange_conn/v1"
 	"github.com/lianyun0502/exchange_conn/v1/binance_conn"
 	"github.com/lianyun0502/exchange_conn/v1/bybit_conn"
+	log "github.com/sirupsen/logrus"
 )
 
 func wsHandler(message []byte) {
-	log.Println(string(message))
+	log.Debug(string(message))
 	j := make(map[string]interface{})
 	json.Unmarshal(message, &j)
-	log.Printf("%v", j["E"])
-	log.Printf("%v", float64(time.Now().UnixNano()/int64(time.Millisecond)))
+	log.Debugf("%v", j["E"])
+	log.Debugf("%v", float64(time.Now().UnixNano()/int64(time.Millisecond)))
 }
 func errorHandler(err error) {
-	log.Println(err)
+	log.Error(err)
 }
 
 func TestBinanceData(t *testing.T) {
@@ -36,14 +37,17 @@ func TestBinanceData(t *testing.T) {
 		return
 	}
 
+	go func() {
+		for {
+			<-agent.Client.StartSignal
+			agent.SendString(`{"method": "SUBSCRIBE","params": ["btcusdt@trade", "btcusdt@aggTrade", "btcusdt@depth@100ms"],"id": 1}`)
+		}
+	}()
+
 	go agent.StartLoop()
 
-	<-agent.Client.StartSignal
-
-	agent.SendString(`{"method": "SUBSCRIBE","params": ["btcusdt@trade", "btcusdt@aggTrade", "btcusdt@depth@100ms"],"id": 1}`)
-
 	go func() {
-		time.Sleep(10 * time.Second)
+		time.Sleep(60 * time.Second)
 		agent.Stop()
 	}()
 

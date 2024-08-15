@@ -23,7 +23,7 @@ func TestPingAPIServer(t *testing.T) {
 		testURL,
 	)
 
-	req := binance_conn.NewBinanceRequest(
+	req := binance_conn.NewRequest(
 		http.MethodGet,
 		"/api/v3/ping",
 		binance_conn.None,
@@ -58,7 +58,7 @@ func TestCheckServerTime(t *testing.T) {
 		testURL,
 	)
 
-	req := binance_conn.NewBinanceRequest(
+	req := binance_conn.NewRequest(
 		http.MethodGet,
 		"/api/v3/time",
 		binance_conn.None,
@@ -92,7 +92,7 @@ func TestGetExchangeInfo(t *testing.T) {
 		testURL,
 	)
 
-	req := binance_conn.NewBinanceRequest(
+	req := binance_conn.NewRequest(
 		http.MethodGet,
 		"/api/v3/exchangeInfo",
 		binance_conn.None,

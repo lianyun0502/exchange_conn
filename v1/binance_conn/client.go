@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	// "log"
 	"net/http"
 	"time"
 
@@ -37,7 +36,6 @@ type Client struct {
 	HTTPClient *http.Client
 
 	Logger *log.Logger
-
 }
 
 // Client factory function
@@ -46,12 +44,14 @@ func NewClient(apiKey, secretKey, baseURL string) *Client {
 	if baseURL == "" {
 		url = "https://api.binance.com"
 	}
+	logger := log.New()
+	logger.SetFormatter(&log.TextFormatter{TimestampFormat: "2006-01-02 15:04:05.000000", FullTimestamp: true})
 	return &Client{
 		APIKey:     apiKey,
 		SecretKey:  secretKey,
 		BaseURL:    url,
 		HTTPClient: http.DefaultClient,
-		Logger:     log.New(),
+		Logger:     logger,
 	}
 }
 
@@ -63,7 +63,7 @@ func (c *Client) Request(method, endpoint string, key, signed bool, opts ...func
 	case key && !signed:
 		sercType = UserStream
 	}
-	req := NewBinanceRequest(method, endpoint, sercType)
+	req := NewRequest(method, endpoint, sercType)
 	return req
 }
 
@@ -78,7 +78,7 @@ func (c *Client) SetRequest(r *request) (req *http.Request, err error) {
 	if bodyString != "" {
 		r.Body = bytes.NewBufferString(bodyString)
 	}
-	
+
 	if r.SercType == Trade || r.SercType == UserData {
 		r.Query.Set("signature", common.GetSignature(c.SecretKey, fmt.Sprintf("%s%s", queryString, bodyString)))
 		queryString = r.Query.Encode()
@@ -87,9 +87,8 @@ func (c *Client) SetRequest(r *request) (req *http.Request, err error) {
 	if queryString != "" {
 		fullURL = fmt.Sprintf("%s?%s", fullURL, queryString)
 	}
-	c.Logger.Printf("full url: %s", fullURL)
-	c.Logger.Debugf("requese body: %s", common.PrettyPrint(r.Form))
-
+	c.Logger.WithFields(log.Fields{"url": fullURL}).Debug("Compose URL")
+	c.Logger.WithFields(log.Fields{"body": r.Form}).Debug("Body Ready")
 	req, err = http.NewRequest(r.Method, fullURL, r.Body)
 	if err != nil {
 		return
@@ -101,18 +100,27 @@ func (c *Client) SetRequest(r *request) (req *http.Request, err error) {
 	if r.SercType != None {
 		req.Header.Set("X-MBX-APIKEY", c.APIKey)
 	}
+	c.Logger.WithFields(log.Fields{"header":req.Header}).Debug("Header Ready")
 	return
 }
 
 func (c *Client) Call(r *http.Request) (data []byte, err error) {
+	c.Logger.WithFields(log.Fields{"method": r.Method, "url": r.URL}).Info("Send Request")
+	c.Logger.WithFields(log.Fields{"header": r.Header, "body": r.Body}).Debug("Request Content")
 	resp, err := c.HTTPClient.Do(r)
 	if err != nil {
 		c.Logger.Errorf("Error: %s", err)
 		return
 	}
-	defer func() {
-		err = resp.Body.Close()
-	}()
-
+	defer resp.Body.Close()
+	c.Logger.WithFields(log.Fields{"status": resp.Status,}).Info("Response Status")
 	return io.ReadAll(resp.Body)
+}
+
+type ClientOption func(*Client)
+
+func WithLogger(logger *log.Logger) ClientOption {
+	return func(c *Client) {
+		c.Logger = logger
+	}
 }

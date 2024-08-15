@@ -36,7 +36,7 @@ type request struct {
 	SercType SecurityT // security type
 }
 
-func NewBinanceRequest(method, endpoint string, sercType SecurityT) *request {
+func NewRequest(method, endpoint string, sercType SecurityT) *request {
 	return &request{Request: exchange_conn.Request{
 		Method:   method,
 		Endpoint: endpoint,
