@@ -96,7 +96,7 @@ func TestBinanceOrder(t *testing.T) {
 
 func TestBinanceTestNewOrder(t *testing.T) {
 	agent := exchange_conn.NewAgent(binance_conn.NewClient(apiKey, secretKey, "https://api.binance.com"))
-
+	agent.Client.Logger.SetLevel(log.DebugLevel)
 	req := agent.Request(http.MethodPost, "/api/v3/order/test", true, true)
 	req.SetParams(map[string]any{
 		"symbol":                 "BTCUSDT",

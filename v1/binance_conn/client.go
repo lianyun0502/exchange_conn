@@ -20,15 +20,6 @@ var BaseURL = [6]string{
 	"https://api4.binance.com",
 }
 
-// type SecurityT int
-// const (
-// 	None SecurityT = iota // all public access
-// 	Trade // API-key and Singnature required
-// 	UserData // API-key and Singnature required
-// 	UserStream // API-key required
-// 	MARKET_DATA // API-key required
-// )
-
 type Client struct {
 	APIKey     string // API key
 	SecretKey  string // Secret key
@@ -72,7 +63,7 @@ func (c *Client) SetRequest(r *request) (req *http.Request, err error) {
 		r.Query.Set("timestamp", fmt.Sprintf("%v", time.Now().UnixNano()/int64(time.Millisecond)))
 	}
 
-	bodyString := r.Form.Encode()
+	bodyString := r.Param.Encode()
 	queryString := r.Query.Encode()
 
 	if bodyString != "" {
@@ -80,7 +71,9 @@ func (c *Client) SetRequest(r *request) (req *http.Request, err error) {
 	}
 
 	if r.SercType == Trade || r.SercType == UserData {
-		r.Query.Set("signature", common.GetSignature(c.SecretKey, fmt.Sprintf("%s%s", queryString, bodyString)))
+		signatureBase := queryString + bodyString
+		c.Logger.WithFields(log.Fields{"signatureBase": signatureBase}).Debug("Signature Base")
+		r.Query.Set("signature", common.GetSignature(c.SecretKey, signatureBase))
 		queryString = r.Query.Encode()
 	}
 	fullURL := fmt.Sprintf("%s%s", c.BaseURL, r.Endpoint)
@@ -100,7 +93,7 @@ func (c *Client) SetRequest(r *request) (req *http.Request, err error) {
 	if r.SercType != None {
 		req.Header.Set("X-MBX-APIKEY", c.APIKey)
 	}
-	c.Logger.WithFields(log.Fields{"header":req.Header}).Debug("Header Ready")
+	c.Logger.WithFields(log.Fields{"header": req.Header}).Debug("Header Ready")
 	return
 }
 
@@ -113,7 +106,7 @@ func (c *Client) Call(r *http.Request) (data []byte, err error) {
 		return
 	}
 	defer resp.Body.Close()
-	c.Logger.WithFields(log.Fields{"status": resp.Status,}).Info("Response Status")
+	c.Logger.WithFields(log.Fields{"status": resp.Status}).Info("Response Status")
 	return io.ReadAll(resp.Body)
 }
 

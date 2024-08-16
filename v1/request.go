@@ -59,7 +59,7 @@ func (p *Params) Encode() string {
 	if ret == "{}" {
 		return ""
 	}
-	return string(data)
+	return ret
 }
 
 type Request struct {
@@ -68,6 +68,7 @@ type Request struct {
 
 	Body  io.Reader
 	Query url.Values // query string
+	Param url.Values // body string
 	Form  Params     // extually is form data, covert to body in the end
 }
 

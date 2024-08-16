@@ -42,7 +42,7 @@ func NewRequest(method, endpoint string, sercType SecurityT) *request {
 		Endpoint: endpoint,
 
 		Query: make(url.Values),
-		Form:  make(exchange_conn.Params),
+		Param: make(url.Values),
 	},
 		SercType: sercType,
 	}
