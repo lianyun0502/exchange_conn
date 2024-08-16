@@ -12,6 +12,7 @@ import (
 	"github.com/lianyun0502/exchange_conn/v1"
 	"github.com/lianyun0502/exchange_conn/v1/binance_conn"
 	"github.com/lianyun0502/exchange_conn/v1/binance_conn/enums"
+	"github.com/lianyun0502/exchange_conn/v1/bybit_conn"
 	"github.com/lianyun0502/exchange_conn/v1/common"
 
 	log "github.com/sirupsen/logrus"
@@ -134,4 +135,70 @@ func TestBinanceAccountInfo(t *testing.T) {
 	j := new(interface{})
 	json.Unmarshal(data, &j)
 	fmt.Println(string(data))
+}
+
+func TestBybitMarketTime(t *testing.T) {
+	agent := exchange_conn.NewAgent(bybit_conn.NewClient(apiKey, secretKey, "https://api.bybit.com"))
+
+	data, err := agent.Request(http.MethodGet, "/v5/market/time", false, false).Send()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	assert.NotEqual(t, string(data), "{}")
+	j := new(interface{})
+	json.Unmarshal(data, &j)
+	fmt.Println(common.PrettyPrint(j))
+
+}
+
+func TestBybitVolatility(t *testing.T) {
+	agent := exchange_conn.NewAgent(bybit_conn.NewClient(apiKey, secretKey, "https://api.bybit.com"))
+
+	req := agent.Request(http.MethodGet, "/v5/market/historical-volatility", false, false)
+	req.SetQueries(map[string]any{
+		"category": "option",
+		"baseCoin": "BTC",
+	},
+	)
+	data, err := req.Send()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	assert.NotEqual(t, string(data), "{}")
+	j := new(interface{})
+	json.Unmarshal(data, &j)
+	fmt.Println(common.PrettyPrint(j))
+
+}
+
+func TestBybitOrder(t *testing.T) {
+	apiKey := "85eeNApDc1F6zGHkcC"
+	secretKey := "oe0hf5JpxFeXojcpZP1WpUKO3Go5EHVIk7yh"
+	agent := exchange_conn.NewAgent(bybit_conn.NewClient(apiKey, secretKey, "https://api.bybit.com"))
+
+	req := agent.Request(http.MethodPost, "/v5/order/create", true, true)
+	req.SetParams(map[string]any{
+		"category":  "spot",
+		"symbol":    "BTCUSDT",
+		"side":      "Buy",
+		"orderType": "Limit",
+		"qty":       "0.001",
+		"price":     "50000",
+	})
+
+	data, err := req.Send()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	assert.NotEqual(t, string(data), "{}")
+	j := new(interface{})
+	json.Unmarshal(data, &j)
+	fmt.Println(common.PrettyPrint(j))
+
 }

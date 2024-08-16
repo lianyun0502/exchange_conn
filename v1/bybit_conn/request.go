@@ -37,6 +37,8 @@ type request struct {
 	recvWindow string
 }
 
+
+
 func NewByBitRequest(method, endpoint string, sercType SecurityT) *request {
 	return &request{Request: exchange_conn.Request{
 		Method:   method,
@@ -46,5 +48,6 @@ func NewByBitRequest(method, endpoint string, sercType SecurityT) *request {
 		Form:  make(exchange_conn.Params),
 	},
 		SercType: sercType,
+		recvWindow: "5000",
 	}
 }
