@@ -1,4 +1,4 @@
-package orderbook_test
+package data_stream_test
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 	"github.com/valyala/fastjson"
 
 	// "github.com/stretchr/testify/assert"
-	"github.com/lianyun0502/exchange_conn/v1/binance_conn/orderbook"
+	"github.com/lianyun0502/exchange_conn/v1/binance_conn/data_stream"
 )
 
 func TestFastJson(t *testing.T) {
@@ -75,8 +75,8 @@ func TestUpdateCurrentOrder(t *testing.T) {
 	var p fastjson.Parser
 
 	data, _ := p.Parse(rawData)
-	orderbook.UpdateCurrentOrder(data.GetArray("b"), bids)
-	orderbook.UpdateCurrentOrder(data.GetArray("a"), asks)
+	data_stream.UpdateCurrentOrder(data.GetArray("b"), bids)
+	data_stream.UpdateCurrentOrder(data.GetArray("a"), asks)
 
 	assert.Equal(t, "0.00096000", bids["57261.83000000"])
 	assert.Equal(t, "5.23762000", bids["57265.01000000"])
@@ -104,7 +104,7 @@ func TestUpdateCurrentOrder(t *testing.T) {
 }
 
 func TestOrderBook2Json(t *testing.T) {
-	o := orderbook.OrderBook{}
+	o := data_stream.OrderBook{}
 	o.Bids = map[string]string{"57261.83000000": "0.00096000", "57265.01000000": "5.23762000"}
 	o.Asks = map[string]string{"57265.03000000": "0.03705000", "57266.71000000": "0.00010000"}
 	o.Time = 1723025111169
@@ -118,7 +118,7 @@ func TestOrderBook2Json(t *testing.T) {
 
 func TestPartialOrderBookUpdate(t *testing.T) {
 	rawData := `{"lastUpdateId":49981777515,"bids":[["57261.83000000","0.00096000"],["57265.01000000","5.23762000"]],"asks":[["57265.03000000","0.03705000"],["57266.71000000","0.00010000"]]}`
-	ob, _ := orderbook.ToConsistentOrderBook([]byte(rawData))
+	ob, _ := data_stream.ToConsistentOrderBook([]byte(rawData))
 
 	assert.Equal(t, ob.Bids["57261.83000000"], "0.00096000")
 	assert.Equal(t, ob.Bids["57265.01000000"], "5.23762000")

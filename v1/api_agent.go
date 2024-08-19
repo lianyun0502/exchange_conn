@@ -21,46 +21,46 @@ type IRequest interface {
 	SetParams(map[string]interface{})
 }
 
-type APIAgent[E IExchange[R], R IRequest] struct {
+type apiAgent[E IExchange[R], R IRequest] struct {
 	Client  E
 	request R
 }
 
-func NewAgent[E IExchange[R], R IRequest](client E, opts ...func(E)) *APIAgent[E, R] {
+func NewAgent[E IExchange[R], R IRequest](client E, opts ...func(E)) *apiAgent[E, R] {
 	for _, opt := range opts {
 		opt(client)
 	} 
-	return &APIAgent[E, R]{
+	return &apiAgent[E, R]{
 		Client: client,
 	}
 }
 
-func (a *APIAgent[E, R]) Request(method string, endpoint string, key bool, signed bool, reqOpts ...func(R)) *APIAgent[E, R] {
+func (a *apiAgent[E, R]) Request(method string, endpoint string, key bool, signed bool, reqOpts ...func(R)) *apiAgent[E, R] {
 	a.request = a.Client.Request(method, endpoint, key, signed, reqOpts...)
 	return a
 }
 
-func (a *APIAgent[E, R]) SetQuery(key string, value any) *APIAgent[E, R] {
+func (a *apiAgent[E, R]) SetQuery(key string, value any) *apiAgent[E, R] {
 	a.request.SetQuery(key, value)
 	return a
 }
 
-func (a *APIAgent[E, R]) SetQueries(params map[string]any) *APIAgent[E, R] {
+func (a *apiAgent[E, R]) SetQueries(params map[string]any) *apiAgent[E, R] {
 	a.request.SetQueries(params)
 	return a
 }
 
-func (a *APIAgent[E, R]) SetParam(key string, value any) *APIAgent[E, R] {
+func (a *apiAgent[E, R]) SetParam(key string, value any) *apiAgent[E, R] {
 	a.request.SetParam(key, value)
 	return a
 }
 
-func (a *APIAgent[E, R]) SetParams(params map[string]any) *APIAgent[E, R] {
+func (a *apiAgent[E, R]) SetParams(params map[string]any) *apiAgent[E, R] {
 	a.request.SetParams(params)
 	return a
 }
 
-func (a *APIAgent[E, R]) Send() (data []byte, err error) {
+func (a *apiAgent[E, R]) Send() (data []byte, err error) {
 	req, err := a.Client.SetRequest(a.request)
 	if err != nil {
 		return

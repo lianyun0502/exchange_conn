@@ -1,4 +1,4 @@
-package trade_stream
+package data_stream
 
 import (
 	"encoding/json"
@@ -10,7 +10,7 @@ type BinanceTradeStreams struct {
 	EventType string `json:"e"`
 	EventTime int64  `json:"E"`
 	Symbol    string `json:"s"`
-	TradeId   int64  `json:"t"`
+	TradeId   string `json:"t"`
 	TradeTime int64  `json:"T"`
 	Price     string `json:"p"`
 	Quantity  string `json:"q"`
@@ -20,7 +20,7 @@ type BinanceAggregateTradeStreams struct {
 	EventType    string `json:"e"`
 	EventTime    int64  `json:"E"`
 	Symbol       string `json:"s"`
-	TradeId      int64  `json:"a"`
+	TradeId      string `json:"a"`
 	TradeTime    int64  `json:"T"`
 	Price        string `json:"p"`
 	Quantity     string `json:"q"`
@@ -29,7 +29,7 @@ type BinanceAggregateTradeStreams struct {
 	IsMaker      bool   `json:"m"`
 }
 
-func ToNormalTradeData(rawData []byte) (data *exchange_conn.TradeSrteam, err error) {
+func ToNormalTradeData(rawData []byte) (data *exchange_conn.TradeStream, err error) {
 
 	raw := new(BinanceTradeStreams)
 	err = json.Unmarshal(rawData, raw)
@@ -42,7 +42,7 @@ func ToNormalTradeData(rawData []byte) (data *exchange_conn.TradeSrteam, err err
 	} else {
 		side = "buy"
 	}
-	data = &exchange_conn.TradeSrteam{
+	data = &exchange_conn.TradeStream{
 		Topic:     raw.EventType,
 		Time:      raw.EventTime,
 		Symbol:    raw.Symbol,
@@ -56,7 +56,7 @@ func ToNormalTradeData(rawData []byte) (data *exchange_conn.TradeSrteam, err err
 	return data, nil
 }
 
-func ToNormalAggregateTradeData(rawData []byte) (data *exchange_conn.TradeSrteam, err error) {
+func ToNormalAggregateTradeData(rawData []byte) (data *exchange_conn.TradeStream, err error) {
 
 	raw := new(BinanceAggregateTradeStreams)
 	err = json.Unmarshal(rawData, raw)
@@ -69,7 +69,7 @@ func ToNormalAggregateTradeData(rawData []byte) (data *exchange_conn.TradeSrteam
 	} else {
 		side = "buy"
 	}
-	data = &exchange_conn.TradeSrteam{
+	data = &exchange_conn.TradeStream{
 		Topic:     raw.EventType,
 		Time:      raw.EventTime,
 		Symbol:    raw.Symbol,

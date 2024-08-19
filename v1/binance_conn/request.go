@@ -3,6 +3,7 @@ package binance_conn
 import (
 	// "fmt"
 	// "io"
+	"fmt"
 	"net/url"
 
 	"github.com/lianyun0502/exchange_conn/v1"
@@ -45,6 +46,16 @@ func NewRequest(method, endpoint string, sercType SecurityT) *request {
 		Param: make(url.Values),
 	},
 		SercType: sercType,
+	}
+}
+
+func (r *request) SetParam(key string, value interface{}) {
+	r.Param.Set(key, fmt.Sprintf("%v", value))
+}
+
+func (r *request) SetParams(params map[string]interface{}) {
+	for k, v := range params {
+		r.SetParam(k, v)
 	}
 }
 

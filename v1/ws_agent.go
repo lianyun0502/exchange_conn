@@ -9,39 +9,31 @@ type IWsClient interface {
 	Connect(string) (*http.Response, error)
 	Stop() error
 	Send([]byte) error
+	Subscribe(string)
 }
 
-type WebSocketAgent[T IWsClient] struct {
+type webSocketAgent[T IWsClient] struct {
 	Client T
+	Subscribe func(string)
+	Send func([]byte) error
+	Connect func(string) (*http.Response, error)
+	StartLoop func()
+	Stop func() error
 }
 
-func NewWebSocketAgent[T IWsClient](client T) *WebSocketAgent[T] {
-	agent := &WebSocketAgent[T]{
+func NewWebSocketAgent[T IWsClient](client T) *webSocketAgent[T] {
+	agent := &webSocketAgent[T]{
 		Client: client,
+		Subscribe: client.Subscribe,
+		Send: client.Send,
+		Connect: client.Connect,
+		StartLoop: client.StartLoop,
+		Stop: client.Stop,
 	}
 	return agent
 }
 
-func (a *WebSocketAgent[T]) Send(msg []byte) {
-	a.Client.Send(msg)
+func (a *webSocketAgent[T]) SendString(msg string) {
+	a.Send([]byte(msg))
 }
 
-func (a *WebSocketAgent[T]) Connect(url string) (*http.Response, error) {
-	return a.Client.Connect(url)
-}
-
-func (a *WebSocketAgent[T]) StartLoop() {
-	a.Client.StartLoop()
-}
-
-func (a *WebSocketAgent[T]) Stop() error {
-	return a.Client.Stop()
-}
-
-func (a *WebSocketAgent[T]) Reconnect() {
-	a.Client.Reconnect()
-}
-
-func (a *WebSocketAgent[T]) SendString(msg string) {
-	a.Client.Send([]byte(msg))
-}

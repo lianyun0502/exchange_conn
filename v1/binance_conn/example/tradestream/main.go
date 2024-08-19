@@ -6,12 +6,12 @@ import (
 	"log"
 	"time"
 	"github.com/lianyun0502/exchange_conn/v1/binance_conn"
-	"github.com/lianyun0502/exchange_conn/v1/binance_conn/trade_stream"
+	"github.com/lianyun0502/exchange_conn/v1/binance_conn/data_stream"
 )
 
 
 func wsHandler(message []byte) {
-	data, err := trade_stream.ToNormalTradeData(message)
+	data, err := data_stream.ToNormalTradeData(message)
 	if err != nil {
 		log.Println(err)
 	}

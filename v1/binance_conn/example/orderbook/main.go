@@ -8,11 +8,11 @@ import (
 
 	"github.com/lianyun0502/exchange_conn/v1"
 	"github.com/lianyun0502/exchange_conn/v1/binance_conn"
-	"github.com/lianyun0502/exchange_conn/v1/binance_conn/orderbook"
+	"github.com/lianyun0502/exchange_conn/v1/binance_conn/data_stream"
 	"github.com/lianyun0502/exchange_conn/v1/common"
 )
 
-var ob = orderbook.NewOrderBook()
+var ob = data_stream.NewOrderBook()
 
 func wsHandler(message []byte) {
 	log.Printf("%v", time.Now().UnixNano()/int64(time.Millisecond))

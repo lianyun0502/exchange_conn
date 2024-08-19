@@ -11,3 +11,8 @@ type WsClient struct {
 func NewWsClient(messageHandle func(message []byte), errHandle func(err error), reconnectTimes int) (client *WsClient) {
 	return &WsClient{WsClient: exchange_conn.NewWsClient(messageHandle, errHandle, reconnectTimes)}
 }
+
+
+func (c *WsClient) Subscribe(topics string) {
+	c.Send([]byte(`{"method":"SUBSCRIBE","params":` + topics + `,"id":1}`))
+}

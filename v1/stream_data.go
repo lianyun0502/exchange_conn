@@ -2,12 +2,12 @@ package exchange_conn
 
 import ()
 
-type TradeSrteam struct {
+type TradeStream struct {
 	Topic     string `json:"topic"`
 	Time      int64  `json:"time"`
 	TradeTime int64  `json:"tradeTime"`
 	Symbol    string `json:"symbol"`
-	TradeId   int64  `json:"tradeId"`
+	TradeId   string  `json:"tradeId"`
 	Price     string `json:"price"`
 	Quantity  string `json:"quantity"`
 	Side      string `json:"side"`
