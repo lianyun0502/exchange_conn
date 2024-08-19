@@ -31,7 +31,7 @@ var logger = &logrus.Logger{
 }
 
 func TestBinancePing(t *testing.T) {
-	agent := exchange_conn.NewAgent(binance_conn.NewClient("YourAPIKey", "YourSecretKey", "https://api.binance.com"))
+	agent := exchange_conn.NewAgent(binance_conn.NewClient("YourAPIKey", "YourSecretKey", "https://testnet.binance.vision"))
 	agent.Client.Logger = logger
 	agent.Client.Logger.SetLevel(logrus.DebugLevel)
 
@@ -45,7 +45,7 @@ func TestBinancePing(t *testing.T) {
 }
 
 func TestBinanceGetInfo(t *testing.T) {
-	agent := exchange_conn.NewAgent(binance_conn.NewClient("YourAPIKey", "YourSecretKey", "https://api.binance.com"))
+	agent := exchange_conn.NewAgent(binance_conn.NewClient("YourAPIKey", "YourSecretKey", "https://testnet.binance.vision"))
 	agent.Client.Logger = logger
 
 	data, err := agent.Request(http.MethodGet, "/api/v3/exchangeInfo", false, false).Send()
@@ -61,7 +61,7 @@ func TestBinanceGetInfo(t *testing.T) {
 }
 
 func TestBinanceOrderBook(t *testing.T) {
-	agent := exchange_conn.NewAgent(binance_conn.NewClient("YourAPIKey", "YourSecretKey", "https://api.binance.com"))
+	agent := exchange_conn.NewAgent(binance_conn.NewClient("YourAPIKey", "YourSecretKey", "https://testnet.binance.vision"))
 	agent.Client.Logger = logger
 
 	data, err := agent.Request(http.MethodGet, "/api/v3/depth", false, false).SetQuery("symbol", "BTCUSDT").SetQuery("limit", "10").Send()
@@ -78,9 +78,9 @@ func TestBinanceOrderBook(t *testing.T) {
 }
 
 func TestBinanceOrder(t *testing.T) {
-	apiKey := "xTz5GK0rSyPANKeQTR5o1zohOdF7DmPRGR2ReAFKNLj0GjoIacB2Ld5Sjzd2p8Wk"
-	secretKey := "Hvsqtth66iAyXw7lnbzQGdw0ZCLPru5MWZPllLbcAuHpGMPNiuWoxXAE6LjpKqNg"
-	agent := exchange_conn.NewAgent(binance_conn.NewClient(apiKey, secretKey, "https://api.binance.com"))
+	apiKey := "GNEImPtijyYkCYRBx7WM3bntSPydYYY8bwqFuYA6BVVUNFKQ1cVTi7AHIdCsBQ3Z"
+	secretKey := "5lkEjNgcicUQ7YZt1L0CAaTc12UWRuhLrUsahle1iQxIXMk95lwVsLEXRaQfkPQr"
+	agent := exchange_conn.NewAgent(binance_conn.NewClient(apiKey, secretKey, "https://testnet.binance.vision"))
 	agent.Client.Logger = logger
 
 	req := agent.Request(http.MethodPost, "/api/v3/order", true, true)
@@ -107,9 +107,9 @@ func TestBinanceOrder(t *testing.T) {
 }
 
 func TestBinanceTestNewOrder(t *testing.T) {
-	apiKey := "xTz5GK0rSyPANKeQTR5o1zohOdF7DmPRGR2ReAFKNLj0GjoIacB2Ld5Sjzd2p8Wk"
-	secretKey := "Hvsqtth66iAyXw7lnbzQGdw0ZCLPru5MWZPllLbcAuHpGMPNiuWoxXAE6LjpKqNg"
-	agent := exchange_conn.NewAgent(binance_conn.NewClient(apiKey, secretKey, "https://api.binance.com"))
+	apiKey := "GNEImPtijyYkCYRBx7WM3bntSPydYYY8bwqFuYA6BVVUNFKQ1cVTi7AHIdCsBQ3Z"
+	secretKey := "5lkEjNgcicUQ7YZt1L0CAaTc12UWRuhLrUsahle1iQxIXMk95lwVsLEXRaQfkPQr"
+	agent := exchange_conn.NewAgent(binance_conn.NewClient(apiKey, secretKey, "https://testnet.binance.vision"))
 	agent.Client.Logger = logger
 
 	req := agent.Request(http.MethodPost, "/api/v3/order/test", true, true)
@@ -137,9 +137,9 @@ func TestBinanceTestNewOrder(t *testing.T) {
 }
 
 func TestBinanceAccountInfo(t *testing.T) {
-	apiKey := "xTz5GK0rSyPANKeQTR5o1zohOdF7DmPRGR2ReAFKNLj0GjoIacB2Ld5Sjzd2p8Wk"
-	secretKey := "Hvsqtth66iAyXw7lnbzQGdw0ZCLPru5MWZPllLbcAuHpGMPNiuWoxXAE6LjpKqNg"
-	agent := exchange_conn.NewAgent(binance_conn.NewClient(apiKey, secretKey, "https://api.binance.com"))
+	apiKey := "GNEImPtijyYkCYRBx7WM3bntSPydYYY8bwqFuYA6BVVUNFKQ1cVTi7AHIdCsBQ3Z"
+	secretKey := "5lkEjNgcicUQ7YZt1L0CAaTc12UWRuhLrUsahle1iQxIXMk95lwVsLEXRaQfkPQr"
+	agent := exchange_conn.NewAgent(binance_conn.NewClient(apiKey, secretKey, "https://testnet.binance.vision"))
 	agent.Client.Logger = logger
 
 	data, err := agent.Request(http.MethodGet, "/api/v3/account", true, true).Send()

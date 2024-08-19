@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	apiKey    = "xTz5GK0rSyPANKeQTR5o1zohOdF7DmPRGR2ReAFKNLj0GjoIacB2Ld5Sjzd2p8Wk"
-	secretKey = "Hvsqtth66iAyXw7lnbzQGdw0ZCLPru5MWZPllLbcAuHpGMPNiuWoxXAE6LjpKqNg"
-	// testURL = "https://testnet.binance.vision"
-	testURL = "https://api1.binance.com"
+	apiKey    = "GNEImPtijyYkCYRBx7WM3bntSPydYYY8bwqFuYA6BVVUNFKQ1cVTi7AHIdCsBQ3Z"
+	secretKey = "5lkEjNgcicUQ7YZt1L0CAaTc12UWRuhLrUsahle1iQxIXMk95lwVsLEXRaQfkPQr"
+	testURL = "https://testnet.binance.vision"
+	// testURL = "https://api1.binance.com"
 )
 
 func TestPingAPIServer(t *testing.T) {
