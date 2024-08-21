@@ -61,7 +61,7 @@ func TestBinanceOrderBookData(t *testing.T) {
 	go agent.StartLoop()
 
 	go func() {
-		time.Sleep(20 * time.Second)
+		time.Sleep(5 * time.Second)
 		agent.Stop()
 	}()
 
@@ -111,4 +111,28 @@ func TestBybitTradeData(t *testing.T) {
 	}()
 
 	<-agent.Client.DoneSignal
+}
+
+
+func TestBybitMarketPriceData(t *testing.T) {
+
+	url := "wss://stream.bybit.com/v5/public/linear"
+
+	agent := exchange_conn.NewWebSocketAgent(bybit_conn.NewWsClient(wsHandler, errorHandler, 10))
+	agent.Client.Logger = logger
+	agent.Client.Logger.SetLevel(logrus.DebugLevel)
+
+	agent.Connect(url)
+
+	go agent.StartLoop()
+
+	agent.Subscribe(`["tickers.BTCUSDT"]`)
+
+	go func() {
+		time.Sleep(30 * time.Second)
+		agent.Stop()
+	}()
+
+	<-agent.Client.DoneSignal
+
 }

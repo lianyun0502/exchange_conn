@@ -1,7 +1,9 @@
 package data_stream
 
 import (
-	"encoding/json"
+	"strconv"
+
+	"github.com/valyala/fastjson"
 
 	"github.com/lianyun0502/exchange_conn/v1"
 )
@@ -10,7 +12,7 @@ type BinanceTradeStreams struct {
 	EventType string `json:"e"`
 	EventTime int64  `json:"E"`
 	Symbol    string `json:"s"`
-	TradeId   string `json:"t"`
+	TradeId   int64  `json:"t"`
 	TradeTime int64  `json:"T"`
 	Price     string `json:"p"`
 	Quantity  string `json:"q"`
@@ -20,7 +22,7 @@ type BinanceAggregateTradeStreams struct {
 	EventType    string `json:"e"`
 	EventTime    int64  `json:"E"`
 	Symbol       string `json:"s"`
-	TradeId      string `json:"a"`
+	TradeId      int64  `json:"a"`
 	TradeTime    int64  `json:"T"`
 	Price        string `json:"p"`
 	Quantity     string `json:"q"`
@@ -30,26 +32,21 @@ type BinanceAggregateTradeStreams struct {
 }
 
 func ToNormalTradeData(rawData []byte) (data *exchange_conn.TradeStream, err error) {
-
-	raw := new(BinanceTradeStreams)
-	err = json.Unmarshal(rawData, raw)
-	if err != nil {
-		return
-	}
+	v := fastjson.MustParseBytes(rawData)
 	var side string
-	if raw.IsMaker {
+	if v.GetBool("m") {
 		side = "sell"
 	} else {
 		side = "buy"
 	}
 	data = &exchange_conn.TradeStream{
-		Topic:     raw.EventType,
-		Time:      raw.EventTime,
-		Symbol:    raw.Symbol,
-		TradeId:   raw.TradeId,
-		TradeTime: raw.TradeTime,
-		Price:     raw.Price,
-		Quantity:  raw.Quantity,
+		Topic:     string(v.GetStringBytes("e")),
+		Time:      v.GetInt64("E"),
+		Symbol:    string(v.GetStringBytes("s")),
+		TradeId:   strconv.FormatInt(v.GetInt64("t"), 10),
+		TradeTime: v.GetInt64("T"),
+		Price:     string(v.GetStringBytes("p")),
+		Quantity:  string(v.GetStringBytes("q")),
 		Side:      side,
 	}
 
@@ -58,25 +55,21 @@ func ToNormalTradeData(rawData []byte) (data *exchange_conn.TradeStream, err err
 
 func ToNormalAggregateTradeData(rawData []byte) (data *exchange_conn.TradeStream, err error) {
 
-	raw := new(BinanceAggregateTradeStreams)
-	err = json.Unmarshal(rawData, raw)
-	if err != nil {
-		return
-	}
+	v := fastjson.MustParseBytes(rawData)
 	var side string
-	if raw.IsMaker {
+	if v.GetBool("m") {
 		side = "sell"
 	} else {
 		side = "buy"
 	}
 	data = &exchange_conn.TradeStream{
-		Topic:     raw.EventType,
-		Time:      raw.EventTime,
-		Symbol:    raw.Symbol,
-		TradeId:   raw.TradeId,
-		TradeTime: raw.TradeTime,
-		Price:     raw.Price,
-		Quantity:  raw.Quantity,
+		Topic:     string(v.GetStringBytes("e")),
+		Time:      v.GetInt64("E"),
+		Symbol:    string(v.GetStringBytes("s")),
+		TradeId:   strconv.FormatInt(v.GetInt64("a"), 10),
+		TradeTime: v.GetInt64("T"),
+		Price:     string(v.GetStringBytes("p")),
+		Quantity:  string(v.GetStringBytes("q")),
 		Side:      side,
 	}
 
