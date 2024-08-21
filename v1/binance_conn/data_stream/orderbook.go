@@ -13,14 +13,53 @@ import (
 
 var p fastjson.Parser
 
+type RingQueue[T any] struct {
+	queue  []T
+	isFull bool
+	Start  int
+	End    int
+}
+
+func NewRingQueue[T any](size int) *RingQueue[T] {
+	return &RingQueue[T]{
+		queue:  make([]T, size),
+		isFull: false,
+		Start:  0,
+		End:    0,
+	}
+}
+
+func (q *RingQueue[T]) Size() int {
+	return len(q.queue)
+}
+
+func (q *RingQueue[T]) Push(data T) {
+	q.queue[q.End] = data
+	q.End = (q.End + 1) % q.Size()
+	q.isFull = (q.End == q.Start)
+	if q.isFull {
+		q.Start = (q.Start + 1) % q.Size()
+	}
+}
+
+func (q *RingQueue[T]) Get(index int) T {
+	return q.queue[index]
+}
+
+func (q *RingQueue[T]) Clear() {
+	q.Start = 0
+	q.End = 0
+	q.isFull = false
+	clear(q.queue)
+}
+
 type OrderBook struct {
 	exchange_conn.OrderBookStream
-
-	orderCache *fastjson.Value `json:"-"`
-	L          *sync.Mutex     `json:"-"`
-	isInit     bool            `json:"-"`
-	snapshot   *fastjson.Value `json:"-"`
-	lastID     int             `json:"-"`
+	orderCache *RingQueue[*fastjson.Value] `json:"-"`
+	L          *sync.Mutex                 `json:"-"`
+	isInit     bool                        `json:"-"`
+	snapshot   *fastjson.Value             `json:"-"`
+	lastID     int                         `json:"-"`
 }
 
 func NewOrderBook() *OrderBook {
@@ -29,7 +68,7 @@ func NewOrderBook() *OrderBook {
 			Bids: make(map[string]string),
 			Asks: make(map[string]string),
 		},
-		orderCache: fastjson.MustParse("[]"),
+		orderCache: NewRingQueue[*fastjson.Value](30),
 		isInit:     false,
 		L:          &sync.Mutex{},
 	}
@@ -54,27 +93,23 @@ func (ob *OrderBook) SetSnapshot(snapshot []byte) (err error) {
 }
 
 func (ob *OrderBook) Init(rawData []byte) (err error) {
-	cache, _ := ob.orderCache.Array()
-	var i = 0
-	for i = 0; i < len(cache); i++ {
-		order := cache[i]
+	cache:= ob.orderCache
+	i := cache.Start
+	for ; i != cache.End; i=(i+1)%cache.Size() {
+		order := cache.Get(i)
 		if order.GetInt("U") <= ob.lastID+1 && order.GetInt("u") >= ob.lastID+1 {
 			fmt.Printf("%v (last ID) +1 >= %v (first ID) and <= %v (final ID) \n", ob.lastID, order.GetInt("U"), order.GetInt("u"))
 			break
 		}
 	}
-	cache = cache[i:]
-	// println(len(cache), "i=", i)
-	if len(cache) == 0 {
+	if i == cache.End {
 		return errors.New("no snapshot")
 	}
-	for i := 0; i < len(cache); i++ {
-		order := cache[i]
+	for ; i != cache.End; i=(i+1)%cache.Size() {
+		order := cache.Get(i)
 		UpdateCurrentOrder(order.GetArray("b"), ob.Bids)
 		UpdateCurrentOrder(order.GetArray("a"), ob.Asks)
-		// ob.isInit = true
 	}
-
 	return
 
 }
@@ -85,41 +120,48 @@ func (ob *OrderBook) cache(rawData []byte) error {
 		return err
 	}
 	// fmt.Println(v)
-	cache, _ := ob.orderCache.Array()
-	ob.orderCache.SetArrayItem(len(cache), v)
-
+	ob.orderCache.Push(v)
 	return nil
 }
 
 func (ob *OrderBook) Update(rawData []byte) (data *OrderBook, err error) {
-	if ob.isInit {
-		data, err := p.ParseBytes(rawData)
-		if err != nil {
-			return nil, err
-		}
-		UpdateCurrentOrder(data.GetArray("b"), ob.Bids)
-		UpdateCurrentOrder(data.GetArray("a"), ob.Asks)
-
-		ob.Topic = string(data.GetStringBytes("e"))
-		ob.Time = data.GetInt64("E")
-		ob.Symbol = string(data.GetStringBytes("s"))
-		return ob, nil
-	} else {
-		// if orderbook is not initialized, cache the data
+	v, err := fastjson.ParseBytes(rawData)
+	if err != nil {
+		return nil, err
+	}
+	// 是否為深度更新
+	if string(v.GetStringBytes("e")) == "depthUpdate" {
 		err = ob.cache(rawData)
 		if err != nil {
 			return nil, err
 		}
-		if ob.snapshot != nil {
-			// fmt.Println("init orderbook")
-			err = ob.Init(nil)
+		if ob.isInit {
+			data, err := p.ParseBytes(rawData)
 			if err != nil {
 				return nil, err
 			}
-			ob.isInit = true
-		}
+			UpdateCurrentOrder(data.GetArray("b"), ob.Bids)
+			UpdateCurrentOrder(data.GetArray("a"), ob.Asks)
 
-		return nil, nil
+			ob.Topic = string(data.GetStringBytes("e"))
+			ob.Time = data.GetInt64("E")
+			ob.Symbol = string(data.GetStringBytes("s"))
+			return ob, nil
+		} else {
+			if ob.snapshot != nil {
+				err = ob.Init(nil)
+				if err != nil {
+					return nil, err
+				}
+				ob.isInit = true
+			}
+			return nil, nil
+		}
+	} else if v.GetInt("result", "lastUpdateId") != 0 && !ob.isInit {
+		err = ob.SetSnapshot(v.GetStringBytes("result"))
+		return nil, err
+	}else{
+		return nil, errors.New("unknown data")
 	}
 }
 

@@ -24,7 +24,7 @@ type webSocketAgent[T IWsClient] struct {
 func NewWebSocketAgent[T IWsClient](client T) *webSocketAgent[T] {
 	agent := &webSocketAgent[T]{
 		Client: client,
-		Subscribe: client.Subscribe,
+		Subscribe: WithSubscribe(client),
 		Send: client.Send,
 		Connect: client.Connect,
 		StartLoop: client.StartLoop,
@@ -37,3 +37,6 @@ func (a *webSocketAgent[T]) SendString(msg string) {
 	a.Send([]byte(msg))
 }
 
+func WithSubscribe[T IWsClient](c T) func(string) {
+	return c.Subscribe
+}
