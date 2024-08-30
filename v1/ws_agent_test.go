@@ -8,7 +8,10 @@ import (
 	// "github.com/stretchr/testify/assert"
 	"github.com/lianyun0502/exchange_conn/v1"
 	"github.com/lianyun0502/exchange_conn/v1/binance_conn"
+	// binance_data  "github.com/lianyun0502/exchange_conn/v1/binance_conn/data_stream"
+	bybit_data "github.com/lianyun0502/exchange_conn/v1/bybit_conn/data_stream"
 	"github.com/lianyun0502/exchange_conn/v1/bybit_conn"
+	"github.com/lianyun0502/exchange_conn/v1/common"
 	"github.com/sirupsen/logrus"
 )
 
@@ -72,8 +75,19 @@ func TestBinanceOrderBookData(t *testing.T) {
 func TestBybitOrderBookData(t *testing.T) {
 
 	url := "wss://stream.bybit.com/v5/public/spot"
+	ob := bybit_data.NewOrderBook()
+	wsHandle := func(message []byte) {
+		logger.Debug(string(message))
+		j := make(map[string]interface{})
+		json.Unmarshal(message, &j)
+		logger.Debugf("%v", j["E"])
+		logger.Debugf("%v", float64(time.Now().UnixNano()/int64(time.Millisecond)))
+		b, _ := ob.Update(message)
+		logger.Debug(common.PrettyPrint(b))
 
-	agent := exchange_conn.NewWebSocketAgent(bybit_conn.NewWsClient(wsHandler, errorHandler, 10))
+	}
+
+	agent := exchange_conn.NewWebSocketAgent(bybit_conn.NewWsClient(wsHandle, errorHandler, 10))
 	agent.Client.Logger = logger
 	agent.Client.Logger.SetLevel(logrus.DebugLevel)
 

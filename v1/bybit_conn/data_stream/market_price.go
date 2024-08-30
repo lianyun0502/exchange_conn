@@ -71,11 +71,11 @@ func MarketPrice() func([]byte) (*exchange_conn.MarKetPriceStream, error) {
 			return nil, nil
 		}
 		switch string(v.GetStringBytes("type")){
+		// case "snapshot":
+		// 	ret, err := InitMarketPrice(v)
+		// 	data = ret
+		// 	return ret, err
 		case "snapshot":
-			ret, err := InitMarketPrice(v)
-			data = ret
-			return ret, err
-		case "delta":
 			if data == nil {
 				return nil, nil
 			}
@@ -84,3 +84,4 @@ func MarketPrice() func([]byte) (*exchange_conn.MarKetPriceStream, error) {
 		return nil, nil
 	}
 }
+
