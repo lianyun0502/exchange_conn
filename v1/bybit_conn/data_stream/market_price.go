@@ -63,7 +63,7 @@ func UpdateMarketPrice(v *fastjson.Value, d *exchange_conn.MarKetPriceStream) (d
 }
 
 func MarketPrice() func([]byte) (*exchange_conn.MarKetPriceStream, error) {
-	var data *exchange_conn.MarKetPriceStream
+	data := new(exchange_conn.MarKetPriceStream)
 	return func (rawData []byte) (*exchange_conn.MarKetPriceStream, error) {
 		v := fastjson.MustParseBytes(rawData)
 		topic := string(v.GetStringBytes("topic"))
