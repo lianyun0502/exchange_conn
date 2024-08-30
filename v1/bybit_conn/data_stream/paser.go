@@ -46,8 +46,8 @@ func (dp *DataParser) Parse(rawData []byte) (any, error) {
 		return dp.Trade.Update(rawData)
 	case "orderbook":
 		return dp.OrderBook.Update(rawData)
-	// case "tickers":
-	// 	return data_stream.MarketPrice()(rawData)
+	case "tickers":
+		return MarketPrice()(rawData)
 	default:
 		return nil, fmt.Errorf("topic %s not found", topic)
 	} 
