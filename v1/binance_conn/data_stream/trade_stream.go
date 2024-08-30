@@ -2,6 +2,7 @@ package data_stream
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/valyala/fastjson"
 
@@ -31,7 +32,7 @@ type BinanceAggregateTradeStreams struct {
 	IsMaker      bool   `json:"m"`
 }
 
-func ToNormalTradeData(rawData []byte) (data *exchange_conn.TradeStream, err error) {
+func ToNormalTradeData(rawData []byte) (data *exchange_conn.MultiTradeStream, err error) {
 	v := fastjson.MustParseBytes(rawData)
 	var side string
 	if v.GetBool("m") {
@@ -39,7 +40,8 @@ func ToNormalTradeData(rawData []byte) (data *exchange_conn.TradeStream, err err
 	} else {
 		side = "buy"
 	}
-	data = &exchange_conn.TradeStream{
+	data = &exchange_conn.MultiTradeStream{Trades: make([]*exchange_conn.TradeStream, 0)}
+	data.Trades = append(data.Trades, &exchange_conn.TradeStream{
 		Topic:     string(v.GetStringBytes("e")),
 		Time:      v.GetInt64("E"),
 		Symbol:    string(v.GetStringBytes("s")),
@@ -47,13 +49,13 @@ func ToNormalTradeData(rawData []byte) (data *exchange_conn.TradeStream, err err
 		TradeTime: v.GetInt64("T"),
 		Price:     string(v.GetStringBytes("p")),
 		Quantity:  string(v.GetStringBytes("q")),
-		Side:      side,
-	}
+		Side:      strings.ToUpper(side),
+	})
 
 	return data, nil
 }
 
-func ToNormalAggregateTradeData(rawData []byte) (data *exchange_conn.TradeStream, err error) {
+func ToNormalAggregateTradeData(rawData []byte) (data *exchange_conn.MultiTradeStream, err error) {
 
 	v := fastjson.MustParseBytes(rawData)
 	var side string
@@ -62,7 +64,8 @@ func ToNormalAggregateTradeData(rawData []byte) (data *exchange_conn.TradeStream
 	} else {
 		side = "buy"
 	}
-	data = &exchange_conn.TradeStream{
+	data = &exchange_conn.MultiTradeStream{Trades: make([]*exchange_conn.TradeStream, 0)}
+	data.Trades = append(data.Trades, &exchange_conn.TradeStream{
 		Topic:     string(v.GetStringBytes("e")),
 		Time:      v.GetInt64("E"),
 		Symbol:    string(v.GetStringBytes("s")),
@@ -70,8 +73,8 @@ func ToNormalAggregateTradeData(rawData []byte) (data *exchange_conn.TradeStream
 		TradeTime: v.GetInt64("T"),
 		Price:     string(v.GetStringBytes("p")),
 		Quantity:  string(v.GetStringBytes("q")),
-		Side:      side,
-	}
+		Side:      strings.ToUpper(side),
+	})
 
 	return data, nil
 }

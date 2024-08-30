@@ -2,6 +2,10 @@ package exchange_conn
 
 import ()
 
+type MultiTradeStream struct {
+	Trades []*TradeStream `json:"Trds"`
+}
+
 type TradeStream struct {
 	Topic     string `json:"Top"`
 	Time      int64  `json:"T"`

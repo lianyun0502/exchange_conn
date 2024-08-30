@@ -12,14 +12,14 @@ func TestToNormalTradeData(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assert.Equal(t, data.Topic, "trade")
-	assert.Equal(t, data.Time, int64(1633775480000))
-	assert.Equal(t, data.Symbol, "BTCUSDT")
-	assert.Equal(t, data.TradeId, "12345")
-	assert.Equal(t, data.TradeTime, int64(1633775480000))
-	assert.Equal(t, data.Price, "60000.00")
-	assert.Equal(t, data.Quantity, "0.001")
-	assert.Equal(t, data.Side, "sell")
+	assert.Equal(t, data.Trades[0].Topic, "trade")
+	assert.Equal(t, data.Trades[0].Time, int64(1633775480000))
+	assert.Equal(t, data.Trades[0].Symbol, "BTCUSDT")
+	assert.Equal(t, data.Trades[0].TradeId, "12345")
+	assert.Equal(t, data.Trades[0].TradeTime, int64(1633775480000))
+	assert.Equal(t, data.Trades[0].Price, "60000.00")
+	assert.Equal(t, data.Trades[0].Quantity, "0.001")
+	assert.Equal(t, data.Trades[0].Side, "SELL")
 
 }
 
@@ -29,12 +29,12 @@ func TestToNormalAggregateTradeData(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assert.Equal(t, data.Topic, "aggTrade")
-	assert.Equal(t, data.Time, int64(1723023583269))
-	assert.Equal(t, data.Symbol, "BTCUSDT")
-	assert.Equal(t, data.TradeId, "3106590246")
-	assert.Equal(t, data.TradeTime, int64(1723023583268))
-	assert.Equal(t, data.Price, "57564.01000000")
-	assert.Equal(t, data.Quantity, "0.00014000")
-	assert.Equal(t, data.Side, "buy")
+	assert.Equal(t, data.Trades[0].Topic, "aggTrade")
+	assert.Equal(t, data.Trades[0].Time, int64(1723023583269))
+	assert.Equal(t, data.Trades[0].Symbol, "BTCUSDT")
+	assert.Equal(t, data.Trades[0].TradeId, "3106590246")
+	assert.Equal(t, data.Trades[0].TradeTime, int64(1723023583268))
+	assert.Equal(t, data.Trades[0].Price, "57564.01000000")
+	assert.Equal(t, data.Trades[0].Quantity, "0.00014000")
+	assert.Equal(t, data.Trades[0].Side, "BUY")
 }

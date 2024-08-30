@@ -1,9 +1,11 @@
 package data_stream
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/lianyun0502/exchange_conn/v1"
 	"github.com/valyala/fastjson"
-	"strconv"
 )
 
 type Trade struct {}
@@ -12,11 +14,13 @@ func NewTrade() *Trade {
 	return &Trade{}
 }
 
-func (t *Trade) Update(rawdata []byte) ([]*exchange_conn.TradeStream, error) {
+func (t *Trade) Update(rawdata []byte) (*exchange_conn.MultiTradeStream, error) {
 	raw := fastjson.MustParseBytes(rawdata)
-	trades := make([]*exchange_conn.TradeStream, 0)
+	data := &exchange_conn.MultiTradeStream{
+		Trades: make([]*exchange_conn.TradeStream, 0),
+	}
 	for i := 0; i < len(raw.GetArray("data")); i++ {
-		trades = append(trades, &exchange_conn.TradeStream{
+		data.Trades = append(data.Trades, &exchange_conn.TradeStream{
 			Topic:     string(raw.GetStringBytes("topic")),
 			Time:      raw.GetInt64("ts"),
 			Symbol:    string(raw.GetStringBytes("data", strconv.Itoa(i), "s")),
@@ -24,8 +28,8 @@ func (t *Trade) Update(rawdata []byte) ([]*exchange_conn.TradeStream, error) {
 			TradeTime: raw.GetInt64("data", strconv.Itoa(i), "T"),
 			Price:     string(raw.GetStringBytes("data", strconv.Itoa(i), "p")),
 			Quantity:  string(raw.GetStringBytes("data", strconv.Itoa(i), "v")),
-			Side:      string(raw.GetStringBytes("data", strconv.Itoa(i), "S")),
+			Side:      strings.ToUpper(string(raw.GetStringBytes("data", strconv.Itoa(i), "S"))),
 		})
 	}
-	return trades, nil
+	return data, nil
 }

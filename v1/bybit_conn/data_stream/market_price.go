@@ -62,7 +62,7 @@ func UpdateMarketPrice(v *fastjson.Value, d *exchange_conn.MarKetPriceStream) (d
 	return d, nil
 }
 
-func MarketPrice () func([]byte) (*exchange_conn.MarKetPriceStream, error) {
+func MarketPrice() func([]byte) (*exchange_conn.MarKetPriceStream, error) {
 	var data *exchange_conn.MarKetPriceStream
 	return func (rawData []byte) (*exchange_conn.MarKetPriceStream, error) {
 		v := fastjson.MustParseBytes(rawData)
@@ -76,6 +76,9 @@ func MarketPrice () func([]byte) (*exchange_conn.MarKetPriceStream, error) {
 			data = ret
 			return ret, err
 		case "delta":
+			if data == nil {
+				return nil, nil
+			}
 			return UpdateMarketPrice(v, data)
 		}
 		return nil, nil
