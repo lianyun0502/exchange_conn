@@ -85,3 +85,24 @@ func MarketPrice() func([]byte) (*exchange_conn.MarKetPriceStream, error) {
 	}
 }
 
+type MarketData struct{
+	Data *exchange_conn.MarKetPriceStream
+}
+
+func NewMarketData() *MarketData {
+	return new(MarketData)
+
+}
+
+func (md *MarketData) Update(rawData []byte) (*exchange_conn.MarKetPriceStream, error) {
+	v := fastjson.MustParseBytes(rawData)
+	topic := string(v.GetStringBytes("topic"))
+	if strings.Split(topic, ".")[0] != "tickers" {
+		return nil, nil
+	}
+	switch string(v.GetStringBytes("type")){
+	case "snapshot":
+		return UpdateMarketPrice(v, md.Data)
+	}
+	return nil, nil
+}
