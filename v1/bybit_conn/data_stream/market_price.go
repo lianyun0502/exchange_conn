@@ -2,7 +2,6 @@ package data_stream
 
 import (
 	"strconv"
-	"strings"
 
 	"github.com/lianyun0502/exchange_conn/v1"
 	"github.com/valyala/fastjson"
@@ -62,29 +61,6 @@ func UpdateMarketPrice(v *fastjson.Value, d *exchange_conn.MarKetPriceStream) (d
 	return d, nil
 }
 
-func MarketPrice() func([]byte) (*exchange_conn.MarKetPriceStream, error) {
-	data := new(exchange_conn.MarKetPriceStream)
-	return func (rawData []byte) (*exchange_conn.MarKetPriceStream, error) {
-		v := fastjson.MustParseBytes(rawData)
-		topic := string(v.GetStringBytes("topic"))
-		if strings.Split(topic, ".")[0] != "tickers" {
-			return nil, nil
-		}
-		switch string(v.GetStringBytes("type")){
-		case "snapshot":
-			ret, err := InitMarketPrice(v)
-			data = ret
-			return ret, err
-		case "delta":
-			if data == nil {
-				return nil, nil
-			}
-			return UpdateMarketPrice(v, data)
-		}
-		return nil, nil
-	}
-}
-
 type MarketData struct{
 	Data *exchange_conn.MarKetPriceStream
 }
@@ -97,7 +73,7 @@ func NewMarketData() *MarketData {
 func (md *MarketData) Update(rawData []byte) (*exchange_conn.MarKetPriceStream, error) {
 	v := fastjson.MustParseBytes(rawData)
 	switch string(v.GetStringBytes("type")){
-		case "snapshot":
+	case "snapshot":
 		ret, err := InitMarketPrice(v)
 		md.Data = ret
 		return ret, err
