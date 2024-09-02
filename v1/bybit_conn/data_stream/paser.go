@@ -15,12 +15,14 @@ type IDataParser interface {
 type DataParser struct {
 	OrderBook *OrderBook
 	Trade *Trade
+	MarketData *MarketData
 }
 
 func NewDataParser() *DataParser {
 	return &DataParser{
 		OrderBook: NewOrderBook(),
 		Trade: NewTrade(),
+		MarketData: NewMarketData(),
 	}
 }
 
@@ -47,7 +49,7 @@ func (dp *DataParser) Parse(rawData []byte) (any, error) {
 	case "orderbook":
 		return dp.OrderBook.Update(rawData)
 	case "tickers":
-		return MarketPrice()(rawData)
+		return dp.MarketData.Update(rawData)
 	default:
 		return nil, fmt.Errorf("topic %s not found", topic)
 	} 
