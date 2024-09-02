@@ -71,11 +71,11 @@ func MarketPrice() func([]byte) (*exchange_conn.MarKetPriceStream, error) {
 			return nil, nil
 		}
 		switch string(v.GetStringBytes("type")){
-		// case "snapshot":
-		// 	ret, err := InitMarketPrice(v)
-		// 	data = ret
-		// 	return ret, err
 		case "snapshot":
+			ret, err := InitMarketPrice(v)
+			data = ret
+			return ret, err
+		case "delta":
 			if data == nil {
 				return nil, nil
 			}
@@ -96,12 +96,15 @@ func NewMarketData() *MarketData {
 
 func (md *MarketData) Update(rawData []byte) (*exchange_conn.MarKetPriceStream, error) {
 	v := fastjson.MustParseBytes(rawData)
-	topic := string(v.GetStringBytes("topic"))
-	if strings.Split(topic, ".")[0] != "tickers" {
-		return nil, nil
-	}
 	switch string(v.GetStringBytes("type")){
-	case "snapshot":
+		case "snapshot":
+		ret, err := InitMarketPrice(v)
+		md.Data = ret
+		return ret, err
+	case "delta":
+		if md.Data == nil {
+			return nil, nil
+		}
 		return UpdateMarketPrice(v, md.Data)
 	}
 	return nil, nil

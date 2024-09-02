@@ -37,9 +37,11 @@ func TestUpdateMarketPrice(t *testing.T) {
     "ts": 1673272861686
 }`
 	// closure return a function
-	UpdateMarketPrice := data_stream.MarketPrice()
+	// UpdateMarketPrice := data_stream.MarketPrice()
 
-	data, err := UpdateMarketPrice([]byte(rawData))
+	market_data := data_stream.NewMarketData()
+
+	data, err := market_data.Update([]byte(rawData))
 	if err != nil {
 		t.Error(err)
 	}
@@ -57,7 +59,7 @@ func TestUpdateMarketPrice(t *testing.T) {
 		t.Log(string(jsonData))
 	}
 	rawData = `{"topic": "tickers.BTCUSDT","type": "delta","data": {"symbol": "BTCUSDT","markPrice": "17217.00","indexPrice": "17227.00"},"cs": 24987956059,"ts": 1673272861700}`
-	data, err = UpdateMarketPrice([]byte(rawData))
+	data, err = market_data.Update([]byte(rawData))
 	if err != nil {
 		t.Error(err)
 	}
