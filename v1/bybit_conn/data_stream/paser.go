@@ -33,7 +33,7 @@ func ByBitSymbolToTopic(symbol string) string {
 	case regexp.MustCompile("tickers").MatchString(symbol):
 		return "tickers"
 	default:
-		return ""
+		return symbol
 	}
 }
 
