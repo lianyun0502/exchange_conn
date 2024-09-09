@@ -63,7 +63,7 @@ func (c *Client) SetRequest(r *request) (req *http.Request, err error) {
 		r.Query.Set("timestamp", fmt.Sprintf("%v", time.Now().UnixNano()/int64(time.Millisecond)))
 	}
 
-	bodyString := r.Param.Encode()
+	bodyString := r.ParamQuery.Encode()
 	queryString := r.Query.Encode()
 
 	if bodyString != "" {
@@ -81,7 +81,7 @@ func (c *Client) SetRequest(r *request) (req *http.Request, err error) {
 		fullURL = fmt.Sprintf("%s?%s", fullURL, queryString)
 	}
 	c.Logger.WithFields(log.Fields{"url": fullURL}).Debug("Compose URL")
-	c.Logger.WithFields(log.Fields{"body": r.Form}).Debug("Body Ready")
+	c.Logger.WithFields(log.Fields{"body": r.ParamQuery}).Debug("Body Ready")
 	req, err = http.NewRequest(r.Method, fullURL, r.Body)
 	if err != nil {
 		return

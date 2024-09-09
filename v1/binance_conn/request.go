@@ -1,11 +1,7 @@
 package binance_conn
 
 import (
-	// "fmt"
-	// "io"
 	"fmt"
-	"net/url"
-
 	"github.com/lianyun0502/exchange_conn/v1"
 )
 
@@ -33,26 +29,22 @@ const (
 )
 
 type request struct {
-	exchange_conn.Request
+	*exchange_conn.Request
 	SercType SecurityT // security type
 }
 
 func NewRequest(method, endpoint string, sercType SecurityT) *request {
-	return &request{Request: exchange_conn.Request{
-		Method:   method,
-		Endpoint: endpoint,
-
-		Query: make(url.Values),
-		Param: make(url.Values),
-	},
+	return &request{
+		Request:  exchange_conn.NewRequest(method, endpoint),
 		SercType: sercType,
 	}
 }
 
 func (r *request) SetParam(key string, value interface{}) {
-	r.Param.Set(key, fmt.Sprintf("%v", value))
+	r.ParamQuery.Set(key, fmt.Sprintf("%v", value))
 }
 
+// binance 的特殊處理，body是 query like
 func (r *request) SetParams(params map[string]interface{}) {
 	for k, v := range params {
 		r.SetParam(k, v)

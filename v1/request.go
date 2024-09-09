@@ -68,8 +68,8 @@ type Request struct {
 
 	Body  io.Reader
 	Query url.Values // query string
-	Param url.Values // body string
-	Form  Params     // extually is form data, covert to body in the end
+	ParamQuery url.Values // body string
+	ParamJson  Params     // extually is form data, covert to body in the end
 }
 
 func NewRequest(method, endpoint string) *Request {
@@ -79,7 +79,8 @@ func NewRequest(method, endpoint string) *Request {
 		// SercType: sercType,
 
 		Query: make(url.Values),
-		Form:  make(Params),
+		ParamQuery: make(url.Values),
+		ParamJson:  make(Params),
 	}
 }
 
@@ -100,14 +101,14 @@ func (r *Request) SetParam(key string, value any) {
 	if r.Method != http.MethodPost {
 		return
 	}
-	r.Form.Add(key, fmt.Sprintf("%v", value))
+	r.ParamJson.Add(key, fmt.Sprintf("%v", value))
 
 }
 func (r *Request) SetParamsString(params string) {
 	if r.Method != http.MethodPost {
 		return
 	}
-	r.Form.SetString(params)
+	r.ParamJson.SetString(params)
 
 }
 
@@ -115,5 +116,5 @@ func (r *Request) SetParams(params map[string]interface{}) {
 	if r.Method != http.MethodPost {
 		return
 	}
-	r.Form.Set(params)
+	r.ParamJson.Set(params)
 }

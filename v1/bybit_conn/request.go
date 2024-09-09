@@ -1,10 +1,6 @@
 package bybit_conn
 
 import (
-	// "fmt"
-	// "io"
-	"net/url"
-
 	"github.com/lianyun0502/exchange_conn/v1"
 )
 
@@ -32,22 +28,22 @@ const (
 )
 
 type request struct {
-	exchange_conn.Request
+	*exchange_conn.Request
 	SercType   SecurityT // security type
 	recvWindow string
 }
 
-
-
 func NewByBitRequest(method, endpoint string, sercType SecurityT) *request {
-	return &request{Request: exchange_conn.Request{
-		Method:   method,
-		Endpoint: endpoint,
-
-		Query: make(url.Values),
-		Form:  make(exchange_conn.Params),
-	},
-		SercType: sercType,
+	return &request{
+		Request:    exchange_conn.NewRequest(method, endpoint),
+		SercType:   sercType,
 		recvWindow: "5000",
+	}
+}
+
+// set the recive window time(ms) for the request
+func SetReciveWindow(time string) func(*request) {
+	return func(r *request) {
+		r.recvWindow = time
 	}
 }

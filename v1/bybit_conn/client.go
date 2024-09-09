@@ -20,7 +20,6 @@ type Client struct {
 
 	Debug  bool
 	Logger *log.Logger
-	do     func(req *http.Request) (*http.Response, error)
 }
 
 // Client factory function
@@ -49,13 +48,16 @@ func (c *Client) Request(method, endpoint string, key, signed bool, opts ...func
 		sercType = UserStream
 	}
 	req := NewByBitRequest(method, endpoint, sercType)
+	for _, opt := range opts {
+		opt(req)
+	}
 	return req
 }
 
 func (c *Client) SetRequest(r *request) (req *http.Request, err error) {
 	fullURL := fmt.Sprintf("%s%s", c.BaseURL, r.Endpoint)
 
-	bodyString := r.Form.Encode()
+	bodyString := r.ParamJson.Encode()
 	queryString := r.Query.Encode()
 
 	if bodyString != "" {
@@ -70,7 +72,7 @@ func (c *Client) SetRequest(r *request) (req *http.Request, err error) {
 		return
 	}
 	c.Logger.WithFields(log.Fields{"url": fullURL}).Debug("Compose URL")
-	c.Logger.WithFields(log.Fields{"body": r.Form}).Debug("Body Ready")
+	c.Logger.WithFields(log.Fields{"body": r.ParamJson}).Debug("Body Ready")
 
 	req.Header.Set("User-Agent", fmt.Sprintf("%s/%s", "bybit_connect", "v1"))
 	if bodyString != "" {
