@@ -16,7 +16,7 @@ var	secretKey = "0CVhyQmkwUDKWLcAP6NhtH7jB0P8XqSIVxE1"
 
 func TestMarketTime(t *testing.T) {
 	client := bybit.NewSpotClient(apiKey, secretKey)
-	data, err := client.Request(http.MethodGet, "/v5/market/time")
+	data, err := client.Request(http.MethodGet, "/v5/market/time").Send()
 	if err != nil {
 		t.Error(err)
 		return
@@ -31,22 +31,15 @@ func TestMarketTime(t *testing.T) {
 
 func TestBybitOrder(t *testing.T) {
 	client := bybit.NewSpotClient(apiKey, secretKey)
-	data, err := client.Request(
-		http.MethodPost, 
-		"/v5/order/create", 
-		SetParam[*bybit.Request](map[string]any{
-			"category":  "spot",
-			"symbol":    "BTCUSDT",
-			"side":      "Buy",
-			"orderType": "Limit",
-			"qty":       "0.001",
-			"price":     "50000",
-		}),
-		SetQuery[*bybit.Request](map[string]string{
-			"category": "option",
-			"baseCoin": "BTC",
-		}),
-	)
+	param := ParamMap{
+		"category":  "spot",
+		"symbol":    "BTCUSDT",
+		"side":      "Buy",
+		"orderType": "Limit",
+		"qty":       "0.001",
+		"price":     "50000",
+	}
+	data, err := client.Request(http.MethodPost, "/v5/order/create", bybit.SetSercurityType(true, true)).SetParam(param).Send()
 	if err != nil {
 		t.Error(err)
 		return
