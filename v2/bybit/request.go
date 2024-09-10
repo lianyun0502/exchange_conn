@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"strconv"
-	"github.com/lianyun0502/exchange_conn/v2/http_client"
 	"github.com/lianyun0502/exchange_conn/v2/common"
+	"github.com/lianyun0502/exchange_conn/v2/http_client"
 	"github.com/sirupsen/logrus"
+	"strconv"
 )
-
 
 const (
 	Signed = 0b01
@@ -20,7 +19,7 @@ const (
 type Request struct {
 	*exchange_conn.Request
 
-	SecType int
+	SecType    int
 	recvWindow string
 }
 
@@ -36,7 +35,7 @@ func (r *Request) SetQuery(query exchange_conn.QueryMap) *Request {
 
 func NewRequest(method, endpoint string, reqOpts ...func(*Request)) *Request {
 	req := &Request{
-		Request: exchange_conn.NewRequest(method, endpoint),
+		Request:    exchange_conn.NewRequest(method, endpoint),
 		recvWindow: "5000",
 	}
 	for _, opt := range reqOpts {
@@ -48,9 +47,8 @@ func NewRequest(method, endpoint string, reqOpts ...func(*Request)) *Request {
 /*
 function that set the security type for the request
 
-	- signed : enable to carry signature
-	- haskey : enable to carry apikey
-
+  - signed : enable to carry signature
+  - haskey : enable to carry apikey
 */
 func SetSercurityType(signed, haskey bool) func(*Request) {
 	return func(r *Request) {
@@ -74,12 +72,11 @@ func SetRecvWindow(time int) func(*Request) {
 	}
 }
 
-
-func WithBybitRequest(req *Request, exchInfo *exchange_conn.ExchangeApi, log *logrus.Logger) func ()(*http.Request, error) {
+func WithBybitRequest(req *Request, exchInfo *exchange_conn.ExchangeApi, log *logrus.Logger) func() (*http.Request, error) {
 	Exch := exchInfo
 	Log := log
 	r := req
-	return func() (*http.Request, error){
+	return func() (*http.Request, error) {
 		fullURL := fmt.Sprintf("%s%s", Exch.BaseURL, r.Endpoint)
 
 		queryString := r.Q().Encode()
@@ -92,8 +89,9 @@ func WithBybitRequest(req *Request, exchInfo *exchange_conn.ExchangeApi, log *lo
 			return nil, err
 		}
 		Log.WithFields(logrus.Fields{"url": fullURL}).Debug("Compose URL")
-		Log.WithFields(logrus.Fields{"body": r.B()}).Debug("Body Ready")
-
+		if body := r.B(); body != nil {
+			Log.WithFields(logrus.Fields{"body": string(body)}).Debug("Body Ready")
+		}
 		req.Header.Set("User-Agent", fmt.Sprintf("%s/%s", "bybit_connect", "v1"))
 		if r.B() != nil {
 			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
