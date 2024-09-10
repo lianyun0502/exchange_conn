@@ -28,7 +28,7 @@ var logger = &logrus.Logger{
 }
 
 func TestMarketTime(t *testing.T) {
-	client := bybit.NewSpotClient(apiKey, secretKey)
+	client := bybit.NewClient(apiKey, secretKey, bybit.WithTestNet(true))
 	client.Log = logger
 	data, err := client.Request(http.MethodGet, "/v5/market/time").Send()
 	if err != nil {
@@ -43,7 +43,7 @@ func TestMarketTime(t *testing.T) {
 }
 
 func TestBybitOrder(t *testing.T) {
-	client := bybit.NewSpotClient(apiKey, secretKey)
+	client := bybit.NewClient(apiKey, secretKey, bybit.WithTestNet(true))
 	client.Log = logger
 	param := ParamMap{
 		"category":  "spot",
@@ -66,7 +66,7 @@ func TestBybitOrder(t *testing.T) {
 }
 
 func TestBybitVolatility(t *testing.T) {
-	client := bybit.NewSpotClient(apiKey, secretKey)
+	client := bybit.NewClient(apiKey, secretKey, bybit.WithTestNet(true))
 	client.Log = logger
 	req := client.Request(http.MethodGet, "/v5/market/historical-volatility")
 	query := QueryMap{
