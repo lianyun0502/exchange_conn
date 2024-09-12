@@ -8,9 +8,13 @@ import (
 )
 
 func InitMarketPrice(v *fastjson.Value) (data *exchange_conn.MarKetPriceStream, err error) {
-	nextFundingTime, err := strconv.ParseInt(string(v.GetStringBytes("data", "nextFundingTime")), 10, 64)
-	if err != nil {
-		return nil, err
+	nft := v.GetStringBytes("data", "nextFundingTime")
+	var nextFundingTime int64
+	if nft != nil{
+		nextFundingTime, err = strconv.ParseInt(string(nft), 10, 64)
+		if err != nil {
+			return nil, err
+		}
 	}
 	data = &exchange_conn.MarKetPriceStream{
 		Topic:           string(v.GetStringBytes("topic")),
