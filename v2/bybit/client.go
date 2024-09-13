@@ -20,7 +20,7 @@ func (c *ByBitClient) Request(method, endpoint string, reqOpts ...func(*Request)
 }
 
 
-func NewClient(apiKey, secretKey string, apiOpts...func(*ByBitClient)) *ByBitClient {
+func NewSpotClient(apiKey, secretKey string, apiOpts...func(*ByBitClient)) *ByBitClient {
 	client := &ByBitClient{
 		HttpClient: &exchange_conn.HttpClient[*Request]{
 			Client: http.DefaultClient,
@@ -29,7 +29,7 @@ func NewClient(apiKey, secretKey string, apiOpts...func(*ByBitClient)) *ByBitCli
 				HostType: consts.Spot,
 				APIKey: apiKey,
 				SecretKey: secretKey,
-				BaseURL: "https://api.bybit.com",
+				BaseURL: MAINNET,
 			},
 			NewRequest: NewRequest,
 			Log: logrus.New(),
@@ -45,9 +45,9 @@ func NewClient(apiKey, secretKey string, apiOpts...func(*ByBitClient)) *ByBitCli
 func WithTestNet(isTest bool) func(*ByBitClient) {
 	return func(c *ByBitClient) {
 		if isTest {
-			c.HttpClient.Exchange.BaseURL = "https://api-testnet.bybit.com"
+			c.HttpClient.Exchange.BaseURL = TESTNET
 		}else{
-			c.HttpClient.Exchange.BaseURL = "https://api.bybit.com"
+			c.HttpClient.Exchange.BaseURL = MAINNET
 		}
 	}
 }
