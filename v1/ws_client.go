@@ -68,7 +68,6 @@ func (conn *WebSocketEvent) OnMessage(socket *gws.Conn, message *gws.Message) {
 	if conn.Ws_Handler != nil {
 		conn.Ws_Handler(message.Data.Bytes())
 	}
-
 }
 func (conn *WebSocketEvent) OnClose(socket *gws.Conn, err error) {
 	conn.Logger.Info("OnClose")

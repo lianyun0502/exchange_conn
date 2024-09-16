@@ -1,0 +1,29 @@
+package bybit
+const (
+	Name    = "bybit.api.go"
+	Version = "1.0.0"
+	// WebSocket public channel - Mainnet
+	SPOT_MAINNET    = "wss://stream.bybit.com/v5/public/spot"
+	LINEAR_MAINNET  = "wss://stream.bybit.com/v5/public/linear"
+	INVERSE_MAINNET = "wss://stream.bybit.com/v5/public/inverse"
+	OPTION_MAINNET  = "wss://stream.bybit.com/v5/public/option"
+
+	// WebSocket public channel - Testnet
+	SPOT_TESTNET    = "wss://stream-testnet.bybit.com/v5/public/spot"
+	LINEAR_TESTNET  = "wss://stream-testnet.bybit.com/v5/public/linear"
+	INVERSE_TESTNET = "wss://stream-testnet.bybit.com/v5/public/inverse"
+	OPTION_TESTNET  = "wss://stream-testnet.bybit.com/v5/public/option"
+
+	// WebSocket private channel
+	WEBSOCKET_PRIVATE_MAINNET = "wss://stream.bybit.com/v5/private"
+	WEBSOCKET_PRIVATE_TESTNET = "wss://stream-testnet.bybit.com/v5/private"
+
+	// WebSocket Trade channel
+	WEBSOCKET_TRADE_MAINNET = "wss://stream.bybit.com/v5/trade"
+	WEBSOCKET_TRADE_TESTNET = "wss://stream-testnet.bybit.com/v5/trade"
+
+	// V3
+	V3_CONTRACT_PRIVATE = "wss://stream.bybit.com/contract/private/v3"
+	V3_UNIFIED_PRIVATE  = "wss://stream.bybit.com/unified/private/v3"
+	V3_SPOT_PRIVATE     = "wss://stream.bybit.com/spot/private/v3"
+)

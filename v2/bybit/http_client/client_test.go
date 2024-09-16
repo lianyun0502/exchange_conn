@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/lianyun0502/exchange_conn/v2/bybit"
+	"github.com/lianyun0502/exchange_conn/v2/bybit/http_client"
 	"github.com/lianyun0502/exchange_conn/v2/common"
 	. "github.com/lianyun0502/exchange_conn/v2/http_client"
 	"github.com/sirupsen/logrus"
