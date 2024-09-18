@@ -1,9 +1,14 @@
 package exchange_conn
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
+	"github.com/lianyun0502/exchange_conn/v2/common"
 	"github.com/lxzan/gws"
 	"github.com/sirupsen/logrus"
 )
@@ -30,6 +35,8 @@ type WsClient struct {
 	msgTimout   *time.Timer
 
 	Ws_Handler func(message []byte)
+
+	ReqMap	  map[string]chan []byte
 
 	StopSignal  chan struct{}
 	StartSignal chan struct{}
@@ -74,17 +81,21 @@ func (wsc *WsClient) OnMessage(socket *gws.Conn, message *gws.Message) {
 	defer message.Close()
 	wsc.Logger.Debug("OnMessage")
 	wsc.msgTimout.Reset(5 * time.Minute)
+	rawData := make([]byte, message.Data.Len())
+	copy(rawData, message.Data.Bytes())
 	if wsc.Ws_Handler != nil {
-		wsc.Ws_Handler(message.Data.Bytes())
+		wsc.Ws_Handler(rawData)
 	}
 }
 func (wsc *WsClient) OnClose(socket *gws.Conn, err error) {
 	wsc.Logger.Info("OnClose")
-	close(wsc.StopSignal)
 	if err != nil {
 		wsc.Logger.Error(err)
 	}
-	wsc.Reconnect()
+	if _, ok := <- wsc.StopSignal; ok {
+		close(wsc.StopSignal)
+		wsc.Reconnect()
+	}
 }
 
 func (wsc *WsClient) StartLoop() {
@@ -93,6 +104,8 @@ func (wsc *WsClient) StartLoop() {
 }
 
 func (wsc *WsClient) Stop() (err error) {
+	wsc.Logger.Info("Stop client")
+	close(wsc.StopSignal)
 	err = wsc.Conn.NetConn().Close()
 	if err != nil {
 		wsc.Logger.Error(err)
@@ -101,7 +114,72 @@ func (wsc *WsClient) Stop() (err error) {
 	return nil
 }
 
+func (wsc *WsClient) Subscribe(topics []string) (respData []byte, err error) {
+	id := common.GetUUID()
+	jTopics, _ := json.Marshal(topics)
+	msg := fmt.Sprintf(`{"req_id":"%s","op":"subscribe","args":%s}`, id, string(jTopics))
+	respCh := make(chan []byte, 2)
+	wsc.ReqMap[id] = respCh
+	err = wsc.Send([]byte(msg))
+	var resp []byte
+	select {
+	case <-time.After(5 * time.Second):
+		wsc.Logger.Warning("Request timeout")
+		err = errors.New("Request timeout")
+		close(respCh)
+	case resp = <-respCh:
+		wsc.Logger.Debugf(`Response: %s`, string(resp))
+	}
+	delete(wsc.ReqMap, id)
+	return resp, err
+}
+
+func (wsc *WsClient) GetSignature() (respData []byte, err error) {
+	expires := time.Now().Unix()*1000 + 10000
+	param := []string{
+		wsc.ExchangeInfo.APIKey,
+		strconv.FormatInt(expires, 10),
+		common.GetSignature(wsc.ExchangeInfo.SecretKey, fmt.Sprintf("GET/realtime%d", expires)),
+	}
+	resp, err := wsc.Request("auth", nil, param)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (wsc *WsClient) Request(op string, header any, args any) (respData []byte, err error) {
+	id := common.GetUUID()
+	req := &Request{
+		ReqID: id,
+		Header: header,
+		Op: op,
+		Args: args,
+	}
+	reqByte, err := json.Marshal(req)
+	if err != nil {
+		return
+	}
+	respCh := make(chan []byte, 2)
+	wsc.ReqMap[id] = respCh
+	wsc.Logger.Debug("Send request")
+	wsc.Send(reqByte)
+	var resp []byte
+	select {
+	case <-time.After(5 * time.Second):
+		wsc.Logger.Warning("Request timeout")
+		err = errors.New("Request timeout")
+		close(respCh)
+	case resp = <-respCh:
+		wsc.Logger.Debugf(`Response: %s`, string(resp))
+	}
+	delete(wsc.ReqMap, id)
+	return resp, err
+}
+
 func (wsc *WsClient) Send(msg []byte) (err error) {
+	wsc.Logger.Info("Send message")
+	wsc.Logger.Debugf(`Send message: %s`, string(msg))
 	err = wsc.Conn.WriteMessage(gws.OpcodeText, msg)
 	if err != nil {
 		wsc.Logger.Error(err)
@@ -161,6 +239,7 @@ func NewWsClient(exchangeInfo *ExchangeApi, wsHandler func(message []byte), clie
 		Logger:       logrus.New(),
 		Ws_Handler:   wsHandler,
 		StartSignal:  make(chan struct{}, 5),
+		ReqMap: make(map[string]chan []byte),
 	}
 	for _, opt := range clientOpts {
 		opt(client)
@@ -179,4 +258,12 @@ func WithReconnectionTimes(times int) func(*WsClient) {
 	return func(client *WsClient) {
 		client.reconnTimes = times
 	}
+}
+
+
+type Request struct {
+	ReqID string `json:"reqId"`
+	Header any `json:"header,omitempty"`
+	Op string `json:"op"`
+	Args any `json:"args,omitempty"`
 }

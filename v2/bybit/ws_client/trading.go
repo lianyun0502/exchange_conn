@@ -1,12 +1,11 @@
 package bybit
 
 import (
-	"encoding/json"
-	"time"
 	"strconv"
+	"time"
 
-	"github.com/lianyun0502/exchange_conn/v2/common"
-	"github.com/lianyun0502/exchange_conn/v2/http_client/consts"
+	"github.com/valyala/fastjson"
+	"github.com/lianyun0502/exchange_conn/v2/consts"
 	"github.com/lianyun0502/exchange_conn/v2/ws_client"
 )
 func NewWsTradeClient(apiKey, secretKey string, opts ...func(*WsBybitClient)) (client *WsBybitClient) {
@@ -21,44 +20,40 @@ func NewWsTradeClient(apiKey, secretKey string, opts ...func(*WsBybitClient)) (c
 		WsClient: exchange_conn.NewWsClient(exchInfo, nil), 
 		maxAliveTime: "",
 	}
+	client.Ws_Handler = WithBybitHandler(client.ReqMap, nil)
 	for _, opt := range opts {
 		opt(client)
 	}
 	return client
 }
 
-
-func (wsc *WsBybitClient) Order(op string) {
-	uuid := common.GetUUID()
-
-	request := &Request{
-		ReqID: uuid,
-		Header: &RequestHeader{
-			Timestamp: time.Now().UnixMicro(),
-			RecvWindow: 5000,
-		},
-		Op: op,
+func (wsc *WsBybitClient) Order(op string, args any) (respData []byte, err error) {
+	header := &RequestHeader{
+		Timestamp: time.Now().UnixMilli(),
+		RecvWindow: 8000,
+		Referer: "bot-001",
 	}
-	req, err := json.Marshal(request)
+	resp, err := wsc.Request(op, header, args)
 	if err != nil {
-		return
+		wsc.Logger.WithField("error", err).Error("Request failed")
+		return nil, err
 	}
-	wsc.Send(req)
+	v, _ := fastjson.ParseBytes(resp)
+	if fastjson.GetInt(resp, "retCode") != 0 {
+		retMsg := string(v.GetStringBytes("retMsg"))
+		wsc.Logger.WithField("retMsg", retMsg).Warn("Request failed")
+	}
+	return resp, nil
 }
 
 
 type RequestHeader struct {	
 	Timestamp int64 `json:"X-BAPI-TIMESTAMP"`
-	RecvWindow int64 `json:"X-BAPI-RECV-WINDOW"`
+	RecvWindow int64 `json:"X-BAPI-RECV-WINDOW,string"`
 	Referer string `json:"Referer"`
 }
 
-type Request struct {
-	ReqID string `json:"reqId"`
-	Header *RequestHeader `json:"header"`
-	Op string `json:"op"`
-	Args string `json:"args"`
-}
+
 
 type ResponseHeader struct {
 	TraceId string `json:"TraceId"`
@@ -99,7 +94,7 @@ func Order(category, symbol, side, orderType, qty string, orderOpts...func(map[s
 	0(default): 否，則是幣幣訂單
 	1: 是，則是槓桿訂單
 */
-func isLeverage(isLeverage int) func(map[string]string) {
+func IsLeverage(isLeverage int) func(map[string]string) {
 	return func(args map[string]string) {
 		if args["category"] != "spot" {
 			return
@@ -125,18 +120,18 @@ func Price(price string) func(map[string]string) {
 		args["price"] = price
 	}
 }
-/*
-direction:
+// /*
+// direction:
 
-	1: 當市場價上漲到了triggerPrice時觸發條件單
-	2: 當市場價下跌到了triggerPrice時觸發條件單
+// 	1: 當市場價上漲到了triggerPrice時觸發條件單
+// 	2: 當市場價下跌到了triggerPrice時觸發條件單
 
-*/
-func Trigger(price, direction string) func(map[string]string) {
-	return func(args map[string]string) {
-		if (args["category"] != "linear") || (args["category"] != "inverse") {
-			return
-		}
-		args["triggerDirection"] = direction
-	}
-}
+// */
+// func Trigger(price, direction string) func(map[string]string) {
+// 	return func(args map[string]string) {
+// 		if (args["category"] != "linear") || (args["category"] != "inverse") {
+// 			return
+// 		}
+// 		args["triggerDirection"] = direction
+// 	}
+// }

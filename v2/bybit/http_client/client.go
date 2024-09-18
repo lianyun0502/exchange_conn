@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/lianyun0502/exchange_conn/v2/http_client"
-	"github.com/lianyun0502/exchange_conn/v2/http_client/consts"
+	"github.com/lianyun0502/exchange_conn/v2/consts"
 	"github.com/sirupsen/logrus"
 )
 

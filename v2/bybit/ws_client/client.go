@@ -2,14 +2,13 @@ package bybit
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
-	"github.com/lianyun0502/exchange_conn/v2/http_client/consts"
+	"github.com/lianyun0502/exchange_conn/v2/consts"
 	"github.com/lianyun0502/exchange_conn/v2/ws_client"
 	"github.com/lxzan/gws"
 	"github.com/sirupsen/logrus"
-	"github.com/lianyun0502/exchange_conn/v2/common"
+	"github.com/valyala/fastjson"
 )
 
 type WsBybitClient struct {
@@ -41,51 +40,8 @@ func (wsc *WsBybitClient) Connect() (resp *http.Response, err error) {
 	return resp, err
 }
 
-func (wsc *WsBybitClient) Subscribe(topics string) {
-	uuid := common.GetUUID()
-	wsc.Send([]byte(`{"req_id": `+ uuid +`,"op":"subscribe","args":` + topics + `}`))
-}
 
-func NewWsSpotClient(opts ...func(*WsBybitClient)) (client *WsBybitClient) {
-	exchInfo := &exchange_conn.ExchangeApi{
-		Name: consts.Bybit,
-		HostType: consts.Spot,
-		BaseURL: SPOT_MAINNET,
-	}
-	client = &WsBybitClient{
-		WsClient: exchange_conn.NewWsClient(exchInfo, nil), 
-		maxAliveTime: "",
-	}
-	for _, opt := range opts {
-		opt(client)
-	}
-	return client
-}
-
-func NewWsFutureClient(opts ...func(*WsBybitClient)) (client *WsBybitClient) {
-	exchInfo := &exchange_conn.ExchangeApi{
-		Name: consts.Bybit,
-		HostType: consts.Future,
-		BaseURL: LINEAR_MAINNET,
-	}
-	client = &WsBybitClient{
-		WsClient: exchange_conn.NewWsClient(exchInfo, nil), 
-		maxAliveTime: "",
-	}
-	for _, opt := range opts {
-		opt(client)
-	}
-	return client
-}
-
-// 針對私有頻道和交易, 您可以自定義連接存活時長, 通過增加參數max_active_time, 最小支持30s (30秒), 最大支持600s (10分鐘)
-func WithMaxAliveTime(maxAliveTime int) func(*WsBybitClient) {
-	return func(wsc *WsBybitClient) {
-		wsc.maxAliveTime = strconv.Itoa(maxAliveTime)
-	}
-}
-
-func WithTestNet() func(*WsBybitClient) {
+func IsTestNet() func(*WsBybitClient) {
 	return func(wsc *WsBybitClient) {
 		switch wsc.ExchangeInfo.HostType {
 		case consts.Future :
@@ -99,6 +55,29 @@ func WithTestNet() func(*WsBybitClient) {
 }
 
 
-func TradeHandler(message []byte){
+func WithBybitHandler(reqMap map[string]chan []byte, qouteHandler func(message []byte)) func([]byte) {
+	return func(rawData []byte){ {
+		v, _ := fastjson.ParseBytes(rawData)
+		if reqID := string(v.GetStringBytes("reqId")); reqID != "" {
+			if respCh, ok := reqMap[reqID]; ok {
+				respCh <- rawData
+				return
+			}
+		}
+		if reqID := string(v.GetStringBytes("req_id")); reqID != "" {
+			if respCh, ok := reqMap[reqID]; ok {
+				respCh <- rawData
+				return
+			}
+		}
+		if qouteHandler != nil {
+			qouteHandler(rawData)
+		}
+	}
+}
 	
 }
+
+
+
+

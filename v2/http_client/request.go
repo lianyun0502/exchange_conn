@@ -81,6 +81,7 @@ func WithSendFunction(client *http.Client, log *logrus.Logger) func(*http.Reques
 		defer func() {
 			err = resp.Body.Close()
 		}()
+		log.WithField("status", resp.Status).Info("Request status")
 		return io.ReadAll(resp.Body)
 
 	}
