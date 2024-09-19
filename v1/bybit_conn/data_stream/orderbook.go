@@ -2,29 +2,40 @@ package data_stream
 
 import (
 	"errors"
+	"sort"
 	"strconv"
 
+	"github.com/duke-git/lancet/v2/maputil"
 	"github.com/lianyun0502/exchange_conn/v1"
 	"github.com/valyala/fastjson"
 )
 
-type OrderBook exchange_conn.OrderBookStream
+// type OrderBook exchange_conn.OrderBookStream
 
-func NewOrderBook() *OrderBook {
+type OrderBook struct {
+	BestDepth int
+	Bids      map[string]string
+	Asks      map[string]string
+}
+
+func NewOrderBook(bestDepth int) *OrderBook {
 	return &OrderBook{
+		BestDepth: bestDepth,
 		Bids: make(map[string]string),
 		Asks: make(map[string]string),
 	}
 }
 
-func (ob *OrderBook) Update(rawdata []byte) (*OrderBook, error) {
+func (ob *OrderBook) Update(rawdata []byte) (*exchange_conn.OrderBookStream, error) {
 	raw := fastjson.MustParseBytes(rawdata)
-	ob.Time = raw.GetInt64("ts")
+	ret := &exchange_conn.OrderBookStream{
+		Time: raw.GetInt64("ts"),
+	}
 	types := string(raw.GetStringBytes("type"))
 	switch types {
 	case "snapshot":
-		ob.Topic = string(raw.GetStringBytes("topic"))
-		ob.Symbol = string(raw.GetStringBytes("data", "s"))
+		ret.Topic = string(raw.GetStringBytes("topic"))
+		ret.Symbol = string(raw.GetStringBytes("data", "s"))
 		clear(ob.Bids)
 		clear(ob.Asks)
 		UpdateCurrentOrder(raw.GetArray("data", "b"), ob.Bids)
@@ -35,7 +46,9 @@ func (ob *OrderBook) Update(rawdata []byte) (*OrderBook, error) {
 	default:
 		return nil, errors.New("unknown type")
 	}
-	return ob, nil
+	ret.Bids = BestMap(ob.Bids, -ob.BestDepth)
+	ret.Asks = BestMap(ob.Asks, ob.BestDepth)
+	return ret, nil
 }
 
 func UpdateCurrentOrder(srcOrders []*fastjson.Value, curOrders map[string]string) {
@@ -49,4 +62,20 @@ func UpdateCurrentOrder(srcOrders []*fastjson.Value, curOrders map[string]string
 		curOrders[price] = quantity
 	}
 
+}
+
+
+func BestMap(src map[string]string, num int) map[string]string {
+	bestMap := make(map[string]string)
+	keys := maputil.Keys(src)
+	sort.Strings(keys)
+	if num >0 && num < len(keys) {
+		keys = keys[:num]
+	} else if num < 0 && num > -len(keys) {
+		keys = keys[len(keys)+num:]
+	}
+	for _, key := range keys {
+		bestMap[key] = src[key]
+	}
+	return bestMap
 }

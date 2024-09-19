@@ -3,6 +3,7 @@ module github.com/lianyun0502/exchange_conn
 go 1.22.5
 
 require (
+	github.com/duke-git/lancet/v2 v2.3.2
 	github.com/google/uuid v1.6.0
 	github.com/lxzan/gws v1.8.5
 	github.com/sirupsen/logrus v1.9.3
@@ -15,6 +16,7 @@ require (
 	github.com/dolthub/maphash v0.1.0 // indirect
 	github.com/klauspost/compress v1.17.5 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
+	golang.org/x/exp v0.0.0-20221208152030-732eee02a75a // indirect
+	golang.org/x/sys v0.1.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

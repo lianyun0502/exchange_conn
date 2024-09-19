@@ -1,9 +1,11 @@
 package data_stream_test
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
+	"github.com/lianyun0502/exchange_conn/v1"
 	"github.com/lianyun0502/exchange_conn/v1/bybit_conn/data_stream"
 )
 
@@ -37,8 +39,8 @@ func TestOrderBook(t *testing.T) {
 		[]byte(`{"topic":"orderbook.50.BTCUSDT","ts":1724047387475,"type":"delta","data":{"s":"BTCUSDT","b":[],"a":[["58484.53","0"],["58491.38","0.002"]],"u":36431207,"seq":37834255912},"cts":1724047387463}`),
 	}
 
-	ob := data_stream.NewOrderBook()
-	var obData *data_stream.OrderBook
+	ob := data_stream.NewOrderBook(5)
+	var obData *exchange_conn.OrderBookStream
 	for _, data := range rawData {
 		obData, _ = ob.Update(data)
 	}
