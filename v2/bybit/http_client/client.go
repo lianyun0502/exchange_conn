@@ -42,12 +42,11 @@ func NewSpotClient(apiKey, secretKey string, apiOpts...func(*ByBitClient)) *ByBi
 	return client
 }
 
-func WithTestNet(isTest bool) func(*ByBitClient) {
+func IsTestNet() func(*ByBitClient) {
 	return func(c *ByBitClient) {
-		if isTest {
+		switch c.Exchange.HostType{
+		case consts.Spot:
 			c.HttpClient.Exchange.BaseURL = TESTNET
-		}else{
-			c.HttpClient.Exchange.BaseURL = MAINNET
 		}
 	}
 }

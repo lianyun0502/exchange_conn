@@ -24,7 +24,7 @@ var logger = &logrus.Logger{
 	Level: logrus.DebugLevel,
 	Hooks: make(logrus.LevelHooks),
 }
-func TestBybitOrder(t *testing.T) {
+func TestBybitWsApiOrder(t *testing.T) {
 	client := bybit.NewWsTradeClient(apiKey, secretKey, bybit.IsTestNet())
 	client.Logger = logger
 	client.Connect()
@@ -73,4 +73,26 @@ func TestBybitQuote(t *testing.T) {
 	}()
 
 	<- client.StopSignal
+}
+func BenchmarkBybitWsApiOrder(b *testing.B) {
+	client := bybit.NewWsTradeClient(apiKey, secretKey, bybit.IsTestNet())
+	client.Logger = logger
+	// logger.SetLevel(logrus.ErrorLevel)
+	client.Connect()
+	go client.Conn.ReadLoop()
+	client.GetSignature()
+	type ParamMap map[string]string
+	param := ParamMap{
+		"category":  "spot",
+		"symbol":    "BTCUSDT",
+		"side":      "Buy",
+		"orderType": "Limit",
+		"qty":       "0.001",
+		"price":     "50000",
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		client.Order("order.create", []ParamMap{param})
+	}
+	
 }

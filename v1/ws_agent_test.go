@@ -75,7 +75,7 @@ func TestBinanceOrderBookData(t *testing.T) {
 func TestBybitOrderBookData(t *testing.T) {
 
 	url := "wss://stream.bybit.com/v5/public/spot"
-	ob := bybit_data.NewOrderBook()
+	ob := bybit_data.NewOrderBook(10)
 	wsHandle := func(message []byte) {
 		logger.Debug(string(message))
 		j := make(map[string]interface{})

@@ -90,7 +90,7 @@ func WithBybitRequest(req *Request, exchInfo *exchange_conn.ExchangeApi, log *lo
 		}
 		Log.WithFields(logrus.Fields{"url": fullURL}).Debug("Compose URL")
 		if body := r.B(); body != nil {
-			Log.WithFields(logrus.Fields{"body": string(body)}).Debug("Body Ready")
+			Log.Debugf(`Request Body : %s`, string(body))
 		}
 		req.Header.Set("User-Agent", fmt.Sprintf("%s/%s", "bybit_connect", "v1"))
 		if r.B() != nil {
@@ -111,7 +111,7 @@ func WithBybitRequest(req *Request, exchInfo *exchange_conn.ExchangeApi, log *lo
 			} else {
 				signatureBase = strconv.FormatInt(timeStamp, 10) + Exch.APIKey + r.recvWindow + queryString
 			}
-			Log.WithFields(logrus.Fields{"signatureBase": signatureBase}).Debug("Signature Base")
+			Log.Debugf(`Signature : %s`, signatureBase)
 			signature := common.GetSignature(Exch.SecretKey, signatureBase)
 			req.Header.Set(signatureKey, signature)
 		}

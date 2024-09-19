@@ -20,7 +20,7 @@ type DataParser struct {
 
 func NewDataParser() *DataParser {
 	return &DataParser{
-		OrderBook: NewOrderBook(5),
+		OrderBook: NewOrderBook(10),
 		Trade: NewTrade(),
 		MarketData: NewMarketData(),
 	}

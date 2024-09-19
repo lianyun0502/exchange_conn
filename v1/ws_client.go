@@ -63,7 +63,7 @@ func (conn *WebSocketEvent) OnPong(socket *gws.Conn, message []byte) {
 }
 func (conn *WebSocketEvent) OnMessage(socket *gws.Conn, message *gws.Message) {
 	defer message.Close()
-	conn.Logger.Info("OnMessage")
+	conn.Logger.Debug("OnMessage")
 	conn.msgTimout.Reset(5 * time.Minute)
 	if conn.Ws_Handler != nil {
 		conn.Ws_Handler(message.Data.Bytes())

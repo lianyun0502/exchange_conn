@@ -2,15 +2,13 @@ package data_stream
 
 import (
 	"errors"
-	"sort"
 	"strconv"
+	"sort"
 
-	"github.com/duke-git/lancet/v2/maputil"
-	"github.com/lianyun0502/exchange_conn/v1"
+	"github.com/lianyun0502/exchange_conn/v2"
 	"github.com/valyala/fastjson"
+	"github.com/duke-git/lancet/v2/maputil"
 )
-
-// type OrderBook exchange_conn.OrderBookStream
 
 type OrderBook struct {
 	BestDepth int
@@ -63,7 +61,6 @@ func UpdateCurrentOrder(srcOrders []*fastjson.Value, curOrders map[string]string
 	}
 
 }
-
 
 func BestMap(src map[string]string, num int) map[string]string {
 	bestMap := make(map[string]string)

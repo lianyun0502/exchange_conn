@@ -28,7 +28,7 @@ var logger = &logrus.Logger{
 }
 
 func TestMarketTime(t *testing.T) {
-	client := bybit.NewSpotClient(apiKey, secretKey, bybit.WithTestNet(true))
+	client := bybit.NewSpotClient(apiKey, secretKey, bybit.IsTestNet())
 	client.Log = logger
 	data, err := client.Request(http.MethodGet, "/v5/market/time").Send()
 	if err != nil {
@@ -43,7 +43,7 @@ func TestMarketTime(t *testing.T) {
 }
 
 func TestBybitOrder(t *testing.T) {
-	client := bybit.NewSpotClient(apiKey, secretKey, bybit.WithTestNet(true))
+	client := bybit.NewSpotClient(apiKey, secretKey, bybit.IsTestNet())
 	client.Log = logger
 	param := ParamMap{
 		"category":  "spot",
@@ -66,7 +66,7 @@ func TestBybitOrder(t *testing.T) {
 }
 
 func TestBybitVolatility(t *testing.T) {
-	client := bybit.NewSpotClient(apiKey, secretKey, bybit.WithTestNet(true))
+	client := bybit.NewSpotClient(apiKey, secretKey, bybit.IsTestNet())
 	client.Log = logger
 	req := client.Request(http.MethodGet, "/v5/market/historical-volatility")
 	query := QueryMap{
@@ -84,4 +84,24 @@ func TestBybitVolatility(t *testing.T) {
 	j := new(interface{})
 	json.Unmarshal(data, &j)
 	t.Log(common.PrettyPrint(j))
+}
+
+
+func BenchmarkOrder(b *testing.B) {
+	client := bybit.NewSpotClient(apiKey, secretKey, bybit.IsTestNet())
+	client.Log = logger
+	// logger.SetLevel(logrus.ErrorLevel)
+	param := ParamMap{
+		"category":  "spot",
+		"symbol":    "BTCUSDT",
+		"side":      "Buy",
+		"orderType": "Limit",
+		"qty":       "0.001",
+		"price":     "50000",
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		client.Request(http.MethodPost, "/v5/order/create", bybit.SetSercurityType(true, true)).SetParam(param).Send()
+	}
+	
 }
