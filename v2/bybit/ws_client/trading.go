@@ -3,28 +3,40 @@ package bybit
 import (
 	"strconv"
 	"time"
+	"fmt"
 
 	"github.com/valyala/fastjson"
 	"github.com/lianyun0502/exchange_conn/v2/consts"
 	"github.com/lianyun0502/exchange_conn/v2/ws_client"
 )
-func NewWsTradeClient(apiKey, secretKey string, opts ...func(*WsBybitClient)) (client *WsBybitClient) {
-	exchInfo := &exchange_conn.ExchangeApi{
-		Name: consts.Bybit,
-		HostType: consts.Trade,
-		APIKey: apiKey,
-		SecretKey: secretKey,
-		BaseURL: WEBSOCKET_TRADE_MAINNET,
+func NewWsAPIClient(hostType string, apiKey, secretKey string, opts ...func(*WsBybitClient)) (*WsBybitClient, error) {
+	var exchInfo *exchange_conn.ExchangeApi
+	switch hostType {
+		case consts.Trade:
+		exchInfo = &exchange_conn.ExchangeApi{
+			Name: consts.Bybit,
+			HostType: consts.Trade,
+			APIKey: apiKey,
+			SecretKey: secretKey,
+			BaseURL: WEBSOCKET_TRADE_MAINNET,
+		}
+		default:
+			return nil, fmt.Errorf("hostType error")
 	}
-	client = &WsBybitClient{
+	client := &WsBybitClient{
 		WsClient: exchange_conn.NewWsClient(exchInfo, nil), 
 		maxAliveTime: "",
 	}
-	client.Ws_Handler = WithBybitHandler(client.ReqMap, nil)
+	opts = append(opts, WithWsHandle(nil))
 	for _, opt := range opts {
 		opt(client)
 	}
-	return client
+	return client, nil
+}
+
+
+func NewWsTradeClient(apiKey, secretKey string, opts ...func(*WsBybitClient)) (*WsBybitClient, error) {
+	return NewWsAPIClient(consts.Trade, apiKey, secretKey, opts...)
 }
 
 func (wsc *WsBybitClient) Order(op string, args any) (respData []byte, err error) {

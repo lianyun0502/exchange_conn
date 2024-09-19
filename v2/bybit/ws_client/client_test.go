@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/lianyun0502/exchange_conn/v2/bybit/ws_client"
+	"github.com/lianyun0502/exchange_conn/v2/consts"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
@@ -25,7 +26,7 @@ var logger = &logrus.Logger{
 	Hooks: make(logrus.LevelHooks),
 }
 func TestBybitWsApiOrder(t *testing.T) {
-	client := bybit.NewWsTradeClient(apiKey, secretKey, bybit.IsTestNet())
+	client, _ := bybit.NewWsTradeClient(apiKey, secretKey, bybit.IsTestNet())
 	client.Logger = logger
 	client.Connect()
 	go client.Conn.ReadLoop()
@@ -51,11 +52,21 @@ func TestBybitWsApiOrder(t *testing.T) {
 	}
 	assert.NotEqual(t, string(resp), "{}")
 
+	go func() {
+		time.Sleep(10 * time.Second)
+		client.Stop()
+	}()
+
 	<- client.StopSignal
 }
 
 func TestBybitQuote(t *testing.T) {
-	client := bybit.NewWsSpotClient(bybit.IsTestNet())
+
+	handle := func(rawData []byte) {
+		logger.Infof(`%s`,string(rawData))
+	}
+	
+	client, _ := bybit.NewWsQuoteClient(consts.Future, handle, bybit.IsTestNet())
 	client.Logger = logger
 	client.Connect()
 	go client.Conn.ReadLoop()
@@ -75,7 +86,7 @@ func TestBybitQuote(t *testing.T) {
 	<- client.StopSignal
 }
 func BenchmarkBybitWsApiOrder(b *testing.B) {
-	client := bybit.NewWsTradeClient(apiKey, secretKey, bybit.IsTestNet())
+	client, _ := bybit.NewWsTradeClient(apiKey, secretKey, bybit.IsTestNet())
 	client.Logger = logger
 	// logger.SetLevel(logrus.ErrorLevel)
 	client.Connect()

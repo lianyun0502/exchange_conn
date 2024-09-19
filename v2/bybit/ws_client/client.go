@@ -142,6 +142,31 @@ func WithBybitHandler(reqMap map[string]chan []byte, qouteHandler func(message [
 	}
 }
 
+
+func WithWsHandle(qouteHandler func(message []byte)) func(*WsBybitClient) {
+	return func(client *WsBybitClient) {
+		client.Ws_Handler = func(rawData []byte) {
+			v, _ := fastjson.ParseBytes(rawData)
+			if reqID := string(v.GetStringBytes("reqId")); reqID != "" {
+				if respCh, ok := client.ReqMap[reqID]; ok {
+					respCh <- rawData
+					return
+				}
+			}
+			if reqID := string(v.GetStringBytes("req_id")); reqID != "" {
+				if respCh, ok := client.ReqMap[reqID]; ok {
+					respCh <- rawData
+					return
+				}
+			}
+			if qouteHandler != nil {
+				qouteHandler(rawData)
+			}
+		}
+	}
+}
+
+
 type Request struct {
 	ReqID  string `json:"reqId"`
 	Header any    `json:"header,omitempty"`

@@ -1,5 +1,9 @@
 # Bybit SDK v2
 
+如有需要可以參考Test case
+- [http api test](./http_client/client_test.go)
+- [websocket test](./ws_client/client_test.go)
+
 ## Example
 
 * http Restful API
