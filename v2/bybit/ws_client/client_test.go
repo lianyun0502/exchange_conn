@@ -73,7 +73,7 @@ func TestBybitQuote(t *testing.T) {
 	client.Connect()
 
 	go func() {	
-		for _ = range client.StartSignal {
+		for range client.StartSignal {
 			resp, err := client.Subscribe([]string{"orderbook.1.BTCUSDT", "publicTrade.BTCUSDT"})
 			if err != nil {
 				t.Log(string(resp))

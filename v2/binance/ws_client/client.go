@@ -131,7 +131,7 @@ func (pm ParamMap) Sign(apiKey, secretKey string) {
 	pm["apiKey"] = apiKey
 	pm["recvWindow"] = "5000"
 	Keys := make([]string, 0)
-	for k, _ := range pm {
+	for k := range pm {
 		Keys = append(Keys, k)
 	}
 	sort.Strings(Keys)

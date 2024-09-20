@@ -42,7 +42,7 @@ func TestBinanceWsQuote(t *testing.T) {
 	}
 
 	go func() {
-		for _ = range client.StartSignal {
+		for range client.StartSignal {
 			client.Subscribe([]string{"btcusdt@trade", "btcusdt@aggTrade", "btcusdt@depth@100ms"})
 		}
 	}()
@@ -100,7 +100,7 @@ func TestBinanceWsOrderFuture(t *testing.T) {
 	client.Logger = logger
 	client.Logger.SetLevel(logrus.DebugLevel)
 	_, err := client.Connect()
-	
+
 	if err != nil {
 		t.Error(err)
 		return
