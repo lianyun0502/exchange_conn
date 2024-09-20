@@ -11,8 +11,6 @@ import (
 	"github.com/lianyun0502/exchange_conn/v2/common"
 	"github.com/lianyun0502/exchange_conn/v2/consts"
 	"github.com/lianyun0502/exchange_conn/v2/ws_client"
-	"github.com/lxzan/gws"
-	"github.com/sirupsen/logrus"
 	"github.com/valyala/fastjson"
 )
 
@@ -22,27 +20,10 @@ type WsBybitClient struct {
 }
 
 func (wsc *WsBybitClient) Connect() (resp *http.Response, err error) {
-	url := wsc.ExchangeInfo.BaseURL
 	if wsc.maxAliveTime != "" {
-		url += "?max_alive_time=" + wsc.maxAliveTime
+		wsc.ExchangeInfo.BaseURL += ("?max_alive_time=" + wsc.maxAliveTime)
 	}
-
-	wsc.ClientOption = &gws.ClientOption{
-		ReadBufferSize:   655350,
-		Addr:             url,
-		HandshakeTimeout: 45 * time.Second,
-		PermessageDeflate: gws.PermessageDeflate{
-			Enabled:               true,
-			ServerContextTakeover: true,
-			ClientContextTakeover: true,
-		},
-	}
-
-	wsc.Conn, resp, err = gws.NewClient(wsc, wsc.ClientOption)
-	if err != nil {
-		wsc.Logger.WithFields(logrus.Fields{"respone": resp}).Error(err)
-	}
-	return resp, err
+	return wsc.WsClient.Connect()
 }
 
 func (wsc *WsBybitClient) Subscribe(topics []string) (respData []byte, err error) {
@@ -65,7 +46,7 @@ func (wsc *WsBybitClient) Subscribe(topics []string) (respData []byte, err error
 	return resp, err
 }
 
-func (wsc *WsBybitClient) GetSignature() (respData []byte, err error) {
+func (wsc *WsBybitClient) Auth() (respData []byte, err error) {
 	expires := time.Now().Unix()*1000 + 10000
 	param := []string{
 		wsc.ExchangeInfo.APIKey,

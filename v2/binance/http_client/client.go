@@ -1,47 +1,58 @@
 package binance
 
 import (
+	"fmt"
 	"net/http"
 
-	"github.com/lianyun0502/exchange_conn/v2/http_client"
 	"github.com/lianyun0502/exchange_conn/v2/consts"
+	"github.com/lianyun0502/exchange_conn/v2/http_client"
 	"github.com/sirupsen/logrus"
 )
 
-type BinanceSpotClient struct {
+type BinanceClient struct {
 	*exchange_conn.HttpClient[*Request]
 }
 
-func (c *BinanceSpotClient) Request(method, endpoint string, reqOpts ...func(*Request)) *Request {
+func (c *BinanceClient) Request(method, endpoint string, reqOpts ...func(*Request)) *Request {
 	req := c.HttpClient.Request(method, endpoint, reqOpts...)
 	req.SetGenHttpRequest(WithBinanceRequest(req, c.HttpClient.Exchange, c.Log))
 	return req
 }
 
-func NewSpotClient(apiKey, secretKey string, apiOpts ...func(*BinanceSpotClient)) *BinanceSpotClient {
-	client := &BinanceSpotClient{
+func NewAPIClient(hostType string, apiKey, secretKey string, opts ...func(*BinanceClient)) (*BinanceClient, error) {
+	var exchInfo *exchange_conn.ExchangeApi
+	switch hostType {
+	case consts.Spot:
+		exchInfo = &exchange_conn.ExchangeApi{
+			Name:      string(consts.Binance),
+			HostType:  consts.Spot,
+			APIKey:    apiKey,
+			SecretKey: secretKey,
+			BaseURL:   SPOT_MAINNET,
+		}
+	default:
+		return nil, fmt.Errorf("hostType %s not supported", hostType)
+	}
+	client := &BinanceClient{
 		HttpClient: &exchange_conn.HttpClient[*Request]{
-			Client: http.DefaultClient,
-			Exchange: &exchange_conn.ExchangeApi{
-				Name:      string(consts.Binance),
-				HostType:  consts.Spot,
-				APIKey:    apiKey,
-				SecretKey: secretKey,
-				BaseURL:   SPOT_MAINNET,
-			},
+			Client:     http.DefaultClient,
+			Exchange:   exchInfo,
 			NewRequest: NewRequest,
 			Log:        logrus.New(),
 		},
 	}
-
-	for _, opt := range apiOpts {
+	for _, opt := range opts {
 		opt(client)
 	}
-	return client
+	return client, nil
 }
 
-func WithTestNet() func(*BinanceSpotClient) {
-	return func(c *BinanceSpotClient) {
+func NewAPISpotClient(apiKey, secretKey string, opts ...func(*BinanceClient)) (*BinanceClient, error) {
+	return NewAPIClient(consts.Spot, apiKey, secretKey, opts...)
+}
+
+func IsTestNet() func(*BinanceClient) {
+	return func(c *BinanceClient) {
 		c.HttpClient.Exchange.BaseURL = SPOT_TESTNET
 	}
 }

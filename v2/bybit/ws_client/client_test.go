@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lianyun0502/exchange_conn/v2/common"
 	"github.com/lianyun0502/exchange_conn/v2/bybit/ws_client"
 	"github.com/lianyun0502/exchange_conn/v2/consts"
 	"github.com/sirupsen/logrus"
@@ -29,8 +30,8 @@ func TestBybitWsApiOrder(t *testing.T) {
 	client, _ := bybit.NewWsTradeClient(apiKey, secretKey, bybit.IsTestNet())
 	client.Logger = logger
 	client.Connect()
-	go client.Conn.ReadLoop()
-	resp, err := client.GetSignature()
+	go client.StartLoop()
+	resp, err := client.Auth()
 	if err != nil {
 		t.Log(string(resp))
 		t.Error(err)
@@ -68,30 +69,37 @@ func TestBybitQuote(t *testing.T) {
 	
 	client, _ := bybit.NewWsQuoteClient(consts.Future, handle, bybit.IsTestNet())
 	client.Logger = logger
+	logger.SetLevel(logrus.DebugLevel)
 	client.Connect()
-	go client.Conn.ReadLoop()
-	resp, err := client.Subscribe([]string{"orderbook.1.BTCUSDT", "publicTrade.BTCUSDT"})
-	if err != nil {
-		t.Log(string(resp))
-		t.Error(err)
-		client.Stop()
-		return
-	}
+
+	go func() {	
+		for _ = range client.StartSignal {
+			resp, err := client.Subscribe([]string{"orderbook.1.BTCUSDT", "publicTrade.BTCUSDT"})
+			if err != nil {
+				t.Log(string(resp))
+				t.Error(err)
+				client.Stop()
+				return
+			}
+		}
+	}()
+
+	go client.StartLoop()
 
 	go func() {
 		time.Sleep(10 * time.Second)
 		client.Stop()
 	}()
 
-	<- client.StopSignal
+	common.WaitForClose(logger, client.StopSignal)
 }
 func BenchmarkBybitWsApiOrder(b *testing.B) {
 	client, _ := bybit.NewWsTradeClient(apiKey, secretKey, bybit.IsTestNet())
 	client.Logger = logger
 	// logger.SetLevel(logrus.ErrorLevel)
 	client.Connect()
-	go client.Conn.ReadLoop()
-	client.GetSignature()
+	go client.StartLoop()
+	client.Auth()
 	type ParamMap map[string]string
 	param := ParamMap{
 		"category":  "spot",

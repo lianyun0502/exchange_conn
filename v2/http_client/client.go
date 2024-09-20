@@ -41,3 +41,11 @@ func (c *HttpClient[R]) Request(method string, endpoint string, reqOpts ...func(
 	r.SetSend(WithSendFunction(c.Client, c.Log))
 	return r
 }
+
+func (c *HttpClient[R]) Get(endpoint string, reqOpts ...func(R)) R {
+	return c.Request(http.MethodGet, endpoint, reqOpts...)
+}
+
+func (c *HttpClient[R]) Post(endpoint string, reqOpts ...func(R)) R {
+	return c.Request(http.MethodPost, endpoint, reqOpts...)
+}

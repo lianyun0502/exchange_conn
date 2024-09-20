@@ -52,6 +52,7 @@ func (wsc *WsClient) OnOpen(socket *gws.Conn) {
 				wsc.msgTimout.Stop()
 				socket.NetConn().Close()
 			case <-wsc.StopSignal:
+				wsc.Logger.Info("stop loop")
 				return
 			}
 		}
@@ -143,6 +144,7 @@ func (wsc *WsClient) Reconnect() {
 }
 
 func (wsc *WsClient) Connect() (resp *http.Response, err error) {
+	wsc.Logger.Infof("Exchange Info :%#v", wsc.ExchangeInfo)
 	wsc.ClientOption = &gws.ClientOption{
 		ReadBufferSize:   655350,
 		Addr:             wsc.ExchangeInfo.BaseURL,

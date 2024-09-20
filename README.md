@@ -69,6 +69,7 @@ there are two ways to install and use the package, one is to clone the repositor
 
 * [v1 Example](v1/README.md)
 * [Bybit v2 Example](v2/Bybit/README.md)
+* [Binance v2 Example](v2/Binance/README.md)
 
 
 

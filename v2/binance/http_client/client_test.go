@@ -6,8 +6,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/lianyun0502/exchange_conn/v2/binance/http_client"
 	"github.com/lianyun0502/exchange_conn/v2/binance/enums"
+	"github.com/lianyun0502/exchange_conn/v2/binance/http_client"
 	"github.com/lianyun0502/exchange_conn/v2/common"
 	. "github.com/lianyun0502/exchange_conn/v2/http_client"
 	"github.com/sirupsen/logrus"
@@ -29,7 +29,7 @@ var logger = &logrus.Logger{
 }
 
 func TestBinancePing(t *testing.T) {
-	client := binance.NewSpotClient(apiKey, secretKey, binance.WithTestNet())
+	client, _ := binance.NewAPISpotClient(apiKey, secretKey, binance.IsTestNet())
 	client.Log = logger
 	data, err := client.Request(http.MethodGet, "/api/v3/ping").Send()
 	if err != nil {
@@ -44,7 +44,7 @@ func TestBinancePing(t *testing.T) {
 }
 
 func TestBinanceGetInfo(t *testing.T) {
-	client := binance.NewSpotClient(apiKey, secretKey, binance.WithTestNet())
+	client, _ := binance.NewAPISpotClient(apiKey, secretKey, binance.IsTestNet())
 	client.Log = logger
 	data, err := client.Request(http.MethodPost, "/api/v3/exchangeInfo").Send()
 	if err != nil {
@@ -59,7 +59,7 @@ func TestBinanceGetInfo(t *testing.T) {
 }
 
 func TestBinanceOrderBook(t *testing.T) {
-	client := binance.NewSpotClient(apiKey, secretKey, binance.WithTestNet())
+	client, _ := binance.NewAPISpotClient(apiKey, secretKey, binance.IsTestNet())
 	client.Log = logger
 	req := client.Request(http.MethodGet, "/api/v3/depth")
 	query := QueryMap{"symbol": "BTCUSDT", "limit": "10"}
@@ -76,7 +76,7 @@ func TestBinanceOrderBook(t *testing.T) {
 	t.Log(common.PrettyPrint(j))
 }
 func TestBinanceOrder(t *testing.T) {
-	client := binance.NewSpotClient(apiKey, secretKey, binance.WithTestNet())
+	client, _ := binance.NewAPISpotClient(apiKey, secretKey, binance.IsTestNet())
 	client.Log = logger
 	req := client.Request(http.MethodPost, "/api/v3/order", binance.SetSercurityType(true, true))
 	param := ParamMap{
@@ -100,7 +100,7 @@ func TestBinanceOrder(t *testing.T) {
 }
 
 func TestBinanceAccountInfo(t *testing.T) {
-	client := binance.NewSpotClient(apiKey, secretKey, binance.WithTestNet())
+	client, _ := binance.NewAPISpotClient(apiKey, secretKey, binance.IsTestNet())
 	client.Log = logger
 	req := client.Request(http.MethodGet, "/api/v3/account", binance.SetSercurityType(true, true))
 	data, err := req.Send()

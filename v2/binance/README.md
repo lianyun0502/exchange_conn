@@ -12,23 +12,23 @@ package main
 
 import (
     "fmt"
-    "github.com/lianyun0502/exchange_conn/v2/bybit/http_client"
+    "github.com/lianyun0502/exchange_conn/v2/binance/http_client"
 )
 
 func main() {
-    // create a new bybit client
-    client := bybit.NewSpotClient("YourAPIKey", "YourSecretKey")
+    // create a new binance client
+    client := bybit.NewAPISpotClient("YourAPIKey", "YourSecretKey")
     // restful api request body
 	param := ParamMap{
-		"category":  "spot",
-		"symbol":    "BTCUSDT",
-		"side":      "Buy",
-		"orderType": "Limit",
-		"qty":       "0.001",
-		"price":     "50000",
+		"symbol":      "BTCUSDT",
+		"side":        enums.Buy,
+		"type":        enums.Limit,
+		"timeInForce": enums.GTC,
+		"quantity":    0.0001,
+		"price":       "50000",
 	}
     // send a request to the exchange
-	data, err := client.Request(http.MethodPost, "/v5/order/create", bybit.SetSercurityType(true, true)).SetParam(param).Send()
+	data, err := client.Request(http.MethodPost, "/api/v3/order", binance.SetSercurityType(true, true)).SetParam(param).Send()
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -43,35 +43,29 @@ func main() {
 
     import (
         "fmt"
-        "github.com/lianyun0502/exchange_conn/v2/bybit/ws_client"
+        "github.com/lianyun0502/exchange_conn/v2/binance/ws_client"
     )
 
     func main() {
         // create a new bybit websocket client
-        client := bybit.NewWsTradeClient("YourAPIKey", "YourSecretKey")
+        client := bybit.NewWsAPIClient("spot", "YourAPIKey", "YourSecretKey")
         // connect to the exchange
         client.Connect()
         // start the message read loop
         go client.StartLoop()
-        // get the signature from the exchange
-        resp, err := client.GetSignature()
-        if err != nil {
-            t.Log(string(resp))
-            t.Error(err)
-            return
-        }
         // print the response data
         type ParamMap map[string]string
         param := ParamMap{
-            "category":  "spot",
-            "symbol":    "BTCUSDT",
-            "side":      "Buy",
-            "orderType": "Limit",
-            "qty":       "0.001",
-            "price":     "50000",
+            "symbol":      "BTCUSDT",
+			"side":        "SELL",
+			"type":        "LIMIT",
+			"timeInForce": "GTC",
+			"price":       "50000",
+			"quantity":    "0.001",
+			"timestamp":   strconv.FormatInt(time.Now().UnixMilli(), 10),
         }
         // send a order request to the exchange
-        resp, err = client.Order("order.create", []ParamMap{param})
+        resp, err = client.Order("order.place", []ParamMap{param})
         if err != nil {
             fmt.Println(string(resp))
             return
@@ -90,12 +84,13 @@ func main() {
 
     import (
         "fmt"
-        "github.com/lianyun0502/exchange_conn/v2/bybit/ws_client"
+        "github.com/lianyun0502/exchange_conn/v2/binance/ws_client"
+        "github.com/lianyun0502/exchange_conn/v2/consts"
     )
 
     func main() {
         // create a new bybit websocket client for quote
-        client := bybit.NewWsSpotClient()
+        client := bybit.NewWsQuoteClient(consts.Spot, handle)
         client.Connect()
         client.Ws_Handler = func(data []byte) {
             fmt.Println(string(data))
