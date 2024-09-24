@@ -14,6 +14,7 @@ type ByBitClient struct{
 }
 
 func (c *ByBitClient) Request(method, endpoint string, reqOpts ...func(*Request)) *Request {
+	c.Log.Info("Gen Request")
 	req := c.HttpClient.Request(method, endpoint, reqOpts...)
 	req.SetGenHttpRequest(WithBybitRequest(req, c.HttpClient.Exchange, c.Log))
 	return req
