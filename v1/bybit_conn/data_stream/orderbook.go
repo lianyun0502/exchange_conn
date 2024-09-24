@@ -46,6 +46,8 @@ func (ob *OrderBook) Update(rawdata []byte) (*exchange_conn.OrderBookStream, err
 	default:
 		return nil, errors.New("unknown type")
 	}
+	ret.Topic = string(raw.GetStringBytes("topic"))
+	ret.Symbol = string(raw.GetStringBytes("data", "s"))
 	ret.Bids = BestMap(ob.Bids, -ob.BestDepth)
 	ret.Asks = BestMap(ob.Asks, ob.BestDepth)
 	return ret, nil
