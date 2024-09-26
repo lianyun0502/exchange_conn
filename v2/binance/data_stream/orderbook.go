@@ -55,8 +55,7 @@ func (q *RingQueue[T]) Clear() {
 	clear(q.queue)
 }
 
-type OrderBook struct {
-	// exchange_conn.OrderBookStream
+type OrderBookParser struct {
 	orderCache *RingQueue[*fastjson.Value] `json:"-"`
 	L          *sync.Mutex                 `json:"-"`
 	isInit     bool                        `json:"-"`
@@ -67,8 +66,8 @@ type OrderBook struct {
 	Asks       map[string]string
 }
 
-func NewOrderBook(depth int) *OrderBook {
-	return &OrderBook{
+func NewOrderBookParser(depth int) *OrderBookParser {
+	return &OrderBookParser{
 		Bids: make(map[string]string),
 		Asks: make(map[string]string),
 		orderCache: NewRingQueue[*fastjson.Value](30),
@@ -77,11 +76,11 @@ func NewOrderBook(depth int) *OrderBook {
 		BestDepth: depth,
 	}
 }
-func (ob *OrderBook) IsInit() bool {
+func (ob *OrderBookParser) IsInit() bool {
 	return ob.isInit
 }
 
-func (ob *OrderBook) SetSnapshot(snapshot []byte) (err error) {
+func (ob *OrderBookParser) SetSnapshot(snapshot []byte) (err error) {
 	ob.L.Lock()
 	ob.snapshot, err = p.ParseBytes(snapshot)
 	if err != nil {
@@ -96,7 +95,7 @@ func (ob *OrderBook) SetSnapshot(snapshot []byte) (err error) {
 	return
 }
 
-func (ob *OrderBook) Init(rawData []byte) (err error) {
+func (ob *OrderBookParser) Init(rawData []byte) (err error) {
 	cache := ob.orderCache
 	i := cache.Start
 	for ; i != cache.End; i = (i + 1) % cache.Size() {
@@ -118,7 +117,7 @@ func (ob *OrderBook) Init(rawData []byte) (err error) {
 
 }
 
-func (ob *OrderBook) cache(rawData []byte) error {
+func (ob *OrderBookParser) cache(rawData []byte) error {
 	v, err := p.ParseBytes(rawData)
 	if err != nil {
 		return err
@@ -128,7 +127,7 @@ func (ob *OrderBook) cache(rawData []byte) error {
 	return nil
 }
 
-func (ob *OrderBook) Update(rawData []byte) (data *exchange_conn.OrderBookStream, err error) {
+func (ob *OrderBookParser) Update(rawData []byte) (data *exchange_conn.OrderBookStream, err error) {
 	v, err := fastjson.ParseBytes(rawData)
 	if err != nil {
 		return nil, err
@@ -185,40 +184,37 @@ func UpdateCurrentOrder(srcOrders []*fastjson.Value, curOrders map[string]string
 
 }
 
-type BinancePartialOrderBook struct {
-	LastUpdateID int64      `json:"lastUpdateId"`
-	Bids         [][]string `json:"bids"`
-	Asks         [][]string `json:"asks"`
+type PartialOrderBook struct {
+	BestDepth int
 }
 
-func ToConsistentOrderBook(rawData []byte) (data *exchange_conn.OrderBookStream, err error) {
+func NewPartialOrderBook(bestDepth int) *PartialOrderBook {
+	return &PartialOrderBook{
+		BestDepth: bestDepth,
+	}
+}
+
+func (ob* PartialOrderBook) Update(rawData []byte) (data *exchange_conn.OrderBookStream, err error) {
 	v, err := p.ParseBytes(rawData)
 	if err != nil {
 		return nil, err
 	}
-	bids := make(map[string]string)
-	asks := make(map[string]string)
-
-	bidsArray := v.GetArray("bids")
-	for i := 0; i < len(bidsArray); i++ {
-		price := string(bidsArray[i].GetStringBytes("0"))
-		quantity := string(bidsArray[i].GetStringBytes("1"))
-		bids[price] = quantity
-	}
-	asksArray := v.GetArray("asks")
-	for i := 0; i < len(asksArray); i++ {
-		price := string(asksArray[i].GetStringBytes("0"))
-		quantity := string(asksArray[i].GetStringBytes("1"))
-		asks[price] = quantity
+	data = &exchange_conn.OrderBookStream{
+		Bids: make(map[string]string),
+		Asks: make(map[string]string),
 	}
 
-	for i := 0; i < len(v.GetArray("bids")); i++ {
+	UpdateCurrentOrder(v.GetArray("b"), data.Bids)
+	UpdateCurrentOrder(v.GetArray("a"), data.Asks)
+	UpdateCurrentOrder(v.GetArray("bids"), data.Bids)
+	UpdateCurrentOrder(v.GetArray("asks"), data.Asks)
 
-		data = &exchange_conn.OrderBookStream{
-			Bids: bids,
-			Asks: asks,
-		}
-	}
+
+	data.Topic = string(v.GetStringBytes("e"))
+	data.Time = v.GetInt64("E")
+	data.Symbol = string(v.GetStringBytes("s"))
+	data.Bids = BestMap(data.Bids, -ob.BestDepth)
+	data.Asks = BestMap(data.Asks, ob.BestDepth)
 	return data, nil
 }
 
@@ -239,7 +235,7 @@ func BestMap(src map[string]string, num int) map[string]string {
 			keys = keys[l+2*num:]
 			src = maputil.FilterByKeys(src, keys)
 		}
-		bestMap = maputil.FilterByKeys(src, keys[keys.Len()+num:])
+		bestMap = maputil.FilterByKeys(src, keys[l+num:])
 	}
 	return bestMap
 }
