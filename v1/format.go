@@ -46,8 +46,10 @@ type MarKetPriceStream struct {
 	Topic           string `json:"Top"`
 	Time            int64  `json:"T"`
 	Symbol          string `json:"S"`
-	MarketPrice     string `json:"MrkP"`
-	IndexPrice      string `json:"IdxP"`
-	FundingRate     string `json:"FndR"`
-	NextFundingTime int64  `json:"NFT"`
+	Category        string `json:"C,omitempty"`
+	LastPrice	   	string `json:"P,omitempty"`
+	MarketPrice     string `json:"MrkP,omitempty"`
+	IndexPrice      string `json:"IdxP,omitempty"`
+	FundingRate     string `json:"FndR,omitempty"`
+	NextFundingTime int64  `json:"NFT,omitempty"`
 }

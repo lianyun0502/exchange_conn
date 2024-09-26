@@ -1,24 +1,22 @@
 package data_stream
 
 import (
+	"fmt"
 	"strconv"
 
-	"github.com/lianyun0502/exchange_conn/v1"
+	"github.com/lianyun0502/exchange_conn/v2"
 	"github.com/valyala/fastjson"
 )
 
 func InitMarketPrice(v *fastjson.Value) (data *exchange_conn.MarKetPriceStream, err error) {
-	nft := v.GetStringBytes("data", "nextFundingTime")
-	var nextFundingTime int64
-	if nft != nil{
-		nextFundingTime, err = strconv.ParseInt(string(nft), 10, 64)
-		if err != nil {
-			return nil, err
-		}
+	nextFundingTime, err := strconv.ParseInt(string(v.GetStringBytes("data", "nextFundingTime")), 10, 64)
+	if err != nil {
+		return nil, err
 	}
 	data = &exchange_conn.MarKetPriceStream{
 		Topic:           string(v.GetStringBytes("topic")),
 		Time:            v.GetInt64("ts"),
+		LastPrice:       string(v.GetStringBytes("data", "lastPrice")),
 		Symbol:          string(v.GetStringBytes("data", "symbol")),
 		MarketPrice:     string(v.GetStringBytes("data", "markPrice")),
 		IndexPrice:      string(v.GetStringBytes("data", "indexPrice")),
@@ -28,9 +26,17 @@ func InitMarketPrice(v *fastjson.Value) (data *exchange_conn.MarKetPriceStream, 
 	return data, nil
 }
 
-func UpdateMarketPrice(v *fastjson.Value, d *exchange_conn.MarKetPriceStream) (data *exchange_conn.MarKetPriceStream, err error) {
+func UpdateMarketPrice(v *fastjson.Value, m map[string]*exchange_conn.MarKetPriceStream) (data *exchange_conn.MarKetPriceStream, err error) {
+	var d *exchange_conn.MarKetPriceStream
+	symbol := v.GetStringBytes("data", "symbol")
+	if symbol != nil {
+		d = m[string(symbol)]
+		d.Symbol = string(symbol)
+	}else{
+		return nil, fmt.Errorf("symbol is nil")
+	}
 	nft := v.GetStringBytes("data", "nextFundingTime")
-	if nft != nil{
+	if nft != nil {
 		nextFundingTime, err := strconv.ParseInt(string(nft), 10, 64)
 		if err != nil {
 			return nil, err
@@ -46,9 +52,9 @@ func UpdateMarketPrice(v *fastjson.Value, d *exchange_conn.MarKetPriceStream) (d
 	if ts != 0 {
 		d.Time = ts
 	}
-	symbol := v.GetStringBytes("data", "symbol")
-	if symbol != nil {
-		d.Symbol = string(symbol)
+	lastPrice := v.GetStringBytes("data", "lastPrice")
+	if lastPrice != nil {
+		d.LastPrice = string(lastPrice)
 	}
 	markPrice := v.GetStringBytes("data", "markPrice")
 	if markPrice != nil {
@@ -65,21 +71,21 @@ func UpdateMarketPrice(v *fastjson.Value, d *exchange_conn.MarKetPriceStream) (d
 	return d, nil
 }
 
-type MarketData struct{
-	Data *exchange_conn.MarKetPriceStream
+type MarketData struct {
+	Data map[string] *exchange_conn.MarKetPriceStream
 }
 
 func NewMarketData() *MarketData {
-	return new(MarketData)
+	return &MarketData{Data: make(map[string] *exchange_conn.MarKetPriceStream)}
 
 }
 
 func (md *MarketData) Update(rawData []byte) (*exchange_conn.MarKetPriceStream, error) {
 	v := fastjson.MustParseBytes(rawData)
-	switch string(v.GetStringBytes("type")){
+	switch string(v.GetStringBytes("type")) {
 	case "snapshot":
 		ret, err := InitMarketPrice(v)
-		md.Data = ret
+		md.Data[ret.Symbol] = ret
 		return ret, err
 	case "delta":
 		if md.Data == nil {
