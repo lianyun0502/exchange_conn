@@ -9,16 +9,16 @@ import (
 )
 
 func NewWsQuoteClient(category string, quoteHandle func([]byte), opts ...func(*WsBybitClient)) (*WsBybitClient, error) {
-	var exchInfo *exchange_conn.ExchangeApi
+	var exchInfo *wsClient.ExchangeApi
 	switch category {
 		case consts.Spot:
-		exchInfo = &exchange_conn.ExchangeApi{
+		exchInfo = &wsClient.ExchangeApi{
 			Name: consts.Bybit,
 			HostType: consts.Spot,
 			BaseURL: SPOT_MAINNET,
 		}
 		case consts.Future:
-		exchInfo = &exchange_conn.ExchangeApi{
+		exchInfo = &wsClient.ExchangeApi{
 			Name: consts.Bybit,
 			HostType: consts.Future,
 			BaseURL: LINEAR_MAINNET,
@@ -28,7 +28,7 @@ func NewWsQuoteClient(category string, quoteHandle func([]byte), opts ...func(*W
 
 	}
 	client := &WsBybitClient{
-		WsClient: exchange_conn.NewWsClient(exchInfo, nil), 
+		WsClient: wsClient.NewWsClient(exchInfo, nil), 
 		maxAliveTime: "",
 	}
 	opts = append(opts, WithWsHandle(quoteHandle))

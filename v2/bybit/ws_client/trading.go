@@ -10,10 +10,10 @@ import (
 	"github.com/lianyun0502/exchange_conn/v2/ws_client"
 )
 func NewWsAPIClient(hostType string, apiKey, secretKey string, opts ...func(*WsBybitClient)) (*WsBybitClient, error) {
-	var exchInfo *exchange_conn.ExchangeApi
+	var exchInfo *wsClient.ExchangeApi
 	switch hostType {
 		case consts.Trade:
-		exchInfo = &exchange_conn.ExchangeApi{
+		exchInfo = &wsClient.ExchangeApi{
 			Name: consts.Bybit,
 			HostType: consts.Trade,
 			APIKey: apiKey,
@@ -24,7 +24,7 @@ func NewWsAPIClient(hostType string, apiKey, secretKey string, opts ...func(*WsB
 			return nil, fmt.Errorf("hostType error")
 	}
 	client := &WsBybitClient{
-		WsClient: exchange_conn.NewWsClient(exchInfo, nil), 
+		WsClient: wsClient.NewWsClient(exchInfo, nil), 
 		maxAliveTime: "",
 	}
 	opts = append(opts, WithWsHandle(nil))

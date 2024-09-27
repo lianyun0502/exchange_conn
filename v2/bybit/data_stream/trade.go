@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lianyun0502/exchange_conn/v2"
+	"github.com/lianyun0502/exchange_conn/v2/data_format"
 	"github.com/valyala/fastjson"
 )
 
@@ -14,13 +14,13 @@ func NewTrade() *Trade {
 	return &Trade{}
 }
 
-func (t *Trade) Update(rawdata []byte) (*exchange_conn.MultiTradeStream, error) {
+func (t *Trade) Update(rawdata []byte) (*format.MultiTradeStream, error) {
 	raw := fastjson.MustParseBytes(rawdata)
-	data := &exchange_conn.MultiTradeStream{
-		Trades: make([]*exchange_conn.TradeStream, 0),
+	data := &format.MultiTradeStream{
+		Trades: make([]*format.TradeStream, 0),
 	}
 	for i := 0; i < len(raw.GetArray("data")); i++ {
-		data.Trades = append(data.Trades, &exchange_conn.TradeStream{
+		data.Trades = append(data.Trades, &format.TradeStream{
 			Topic:     string(raw.GetStringBytes("topic")),
 			Time:      raw.GetInt64("ts"),
 			Symbol:    string(raw.GetStringBytes("data", strconv.Itoa(i), "s")),

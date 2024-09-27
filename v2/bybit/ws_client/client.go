@@ -15,7 +15,7 @@ import (
 )
 
 type WsBybitClient struct {
-	*exchange_conn.WsClient
+	*wsClient.WsClient
 	maxAliveTime string
 }
 
@@ -122,7 +122,6 @@ func WithBybitHandler(reqMap map[string]chan []byte, qouteHandler func(message [
 		}
 	}
 }
-
 
 func WithWsHandle(qouteHandler func(message []byte)) func(*WsBybitClient) {
 	return func(client *WsBybitClient) {

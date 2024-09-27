@@ -6,7 +6,7 @@ import (
 
 	"github.com/valyala/fastjson"
 
-	"github.com/lianyun0502/exchange_conn/v2"
+	"github.com/lianyun0502/exchange_conn/v2/data_format"
 )
 
 type BinanceTradeStreams struct {
@@ -32,7 +32,7 @@ type BinanceAggregateTradeStreams struct {
 	IsMaker      bool   `json:"m"`
 }
 
-func ToNormalTradeData(rawData []byte) (data *exchange_conn.MultiTradeStream, err error) {
+func ToNormalTradeData(rawData []byte) (data *format.MultiTradeStream, err error) {
 	v := fastjson.MustParseBytes(rawData)
 	var side string
 	if v.GetBool("m") {
@@ -40,8 +40,8 @@ func ToNormalTradeData(rawData []byte) (data *exchange_conn.MultiTradeStream, er
 	} else {
 		side = "buy"
 	}
-	data = &exchange_conn.MultiTradeStream{Trades: make([]*exchange_conn.TradeStream, 0)}
-	data.Trades = append(data.Trades, &exchange_conn.TradeStream{
+	data = &format.MultiTradeStream{Trades: make([]*format.TradeStream, 0)}
+	data.Trades = append(data.Trades, &format.TradeStream{
 		Topic:     string(v.GetStringBytes("e")),
 		Time:      v.GetInt64("E"),
 		Symbol:    string(v.GetStringBytes("s")),
@@ -55,7 +55,7 @@ func ToNormalTradeData(rawData []byte) (data *exchange_conn.MultiTradeStream, er
 	return data, nil
 }
 
-func ToNormalAggregateTradeData(rawData []byte) (data *exchange_conn.MultiTradeStream, err error) {
+func ToNormalAggregateTradeData(rawData []byte) (data *format.MultiTradeStream, err error) {
 
 	v := fastjson.MustParseBytes(rawData)
 	var side string
@@ -64,8 +64,8 @@ func ToNormalAggregateTradeData(rawData []byte) (data *exchange_conn.MultiTradeS
 	} else {
 		side = "buy"
 	}
-	data = &exchange_conn.MultiTradeStream{Trades: make([]*exchange_conn.TradeStream, 0)}
-	data.Trades = append(data.Trades, &exchange_conn.TradeStream{
+	data = &format.MultiTradeStream{Trades: make([]*format.TradeStream, 0)}
+	data.Trades = append(data.Trades, &format.TradeStream{
 		Topic:     string(v.GetStringBytes("e")),
 		Time:      v.GetInt64("E"),
 		Symbol:    string(v.GetStringBytes("s")),

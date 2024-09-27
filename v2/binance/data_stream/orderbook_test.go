@@ -9,7 +9,7 @@ import (
 	"github.com/valyala/fastjson"
 
 	// "github.com/stretchr/testify/assert"
-	"github.com/lianyun0502/exchange_conn/v2"
+	"github.com/lianyun0502/exchange_conn/v2/data_format"
 	"github.com/lianyun0502/exchange_conn/v2/binance/data_stream"
 )
 
@@ -105,7 +105,7 @@ func TestUpdateCurrentOrder(t *testing.T) {
 }
 
 func TestOrderBook2Json(t *testing.T) {
-	o := exchange_conn.OrderBookStream{}
+	o := format.OrderBookStream{}
 	o.Bids = map[string]string{"57261.83000000": "0.00096000", "57265.01000000": "5.23762000"}
 	o.Asks = map[string]string{"57265.03000000": "0.03705000", "57266.71000000": "0.00010000"}
 	o.Time = 1723025111169

@@ -1,4 +1,4 @@
-package exchange_conn
+package httpClient
 
 import (
 	"net/http"

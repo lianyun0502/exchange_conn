@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"sort"
 
-	"github.com/lianyun0502/exchange_conn/v2"
+	"github.com/lianyun0502/exchange_conn/v2/data_format"
 	"github.com/valyala/fastjson"
 	"github.com/duke-git/lancet/v2/maputil"
 )
@@ -24,9 +24,9 @@ func NewOrderBook(bestDepth int) *OrderBook {
 	}
 }
 
-func (ob *OrderBook) Update(rawdata []byte) (*exchange_conn.OrderBookStream, error) {
+func (ob *OrderBook) Update(rawdata []byte) (*format.OrderBookStream, error) {
 	raw := fastjson.MustParseBytes(rawdata)
-	ret := &exchange_conn.OrderBookStream{
+	ret := &format.OrderBookStream{
 		Time: raw.GetInt64("ts"),
 
 	}

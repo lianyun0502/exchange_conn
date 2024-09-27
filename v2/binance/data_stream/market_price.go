@@ -1,13 +1,13 @@
 package data_stream
 
 import (
-	"github.com/lianyun0502/exchange_conn/v2"
+	"github.com/lianyun0502/exchange_conn/v2/data_format"
 	"github.com/valyala/fastjson"
 )
 
-func UpdateMarketPrice(rawData []byte) (data *exchange_conn.MarKetPriceStream, err error) {
+func UpdateMarketPrice(rawData []byte) (data *format.MarKetPriceStream, err error) {
 	v := fastjson.MustParseBytes(rawData)
-	data = &exchange_conn.MarKetPriceStream{
+	data = &format.MarKetPriceStream{
 		Topic:           string(v.GetStringBytes("e")),
 		Time:            v.GetInt64("E"),
 		Symbol:          string(v.GetStringBytes("s")),

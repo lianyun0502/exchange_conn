@@ -17,25 +17,25 @@ const (
 )
 
 type Request struct {
-	*exchange_conn.Request
+	*httpClient.Request
 
 	SecType    int
 	recvWindow string
 }
 
-func (r *Request) SetParam(param exchange_conn.ParamMap) *Request {
+func (r *Request) SetParam(param httpClient.ParamMap) *Request {
 	// override the SetParam function
-	return exchange_conn.WithParam(r)(param)
+	return httpClient.WithParam(r)(param)
 }
 
-func (r *Request) SetQuery(query exchange_conn.QueryMap) *Request {
+func (r *Request) SetQuery(query httpClient.QueryMap) *Request {
 	// override the SetQuery function
-	return exchange_conn.WithQuery(r)(query)
+	return httpClient.WithQuery(r)(query)
 }
 
 func NewRequest(method, endpoint string, reqOpts ...func(*Request)) *Request {
 	req := &Request{
-		Request:    exchange_conn.NewRequest(method, endpoint),
+		Request:    httpClient.NewRequest(method, endpoint),
 		recvWindow: "5000",
 	}
 	for _, opt := range reqOpts {
@@ -72,7 +72,7 @@ func SetRecvWindow(time int) func(*Request) {
 	}
 }
 
-func WithBybitRequest(req *Request, exchInfo *exchange_conn.ExchangeApi, log *logrus.Logger) func() (*http.Request, error) {
+func WithBybitRequest(req *Request, exchInfo *httpClient.ExchangeApi, log *logrus.Logger) func() (*http.Request, error) {
 	Exch := exchInfo
 	Log := log
 	r := req

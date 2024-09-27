@@ -1,4 +1,4 @@
-package exchange_conn
+package httpClient
 
 import "net/http"
 
@@ -11,8 +11,6 @@ type OrderResponse struct {
 	ClientID string
 	Raw any
 }
-
-
 
 type OdrMsgTag string
 const (

@@ -10,7 +10,7 @@ import (
 )
 
 type BinanceClient struct {
-	*exchange_conn.HttpClient[*Request]
+	*httpClient.HttpClient[*Request]
 }
 
 func (c *BinanceClient) Request(method, endpoint string, reqOpts ...func(*Request)) *Request {
@@ -20,10 +20,10 @@ func (c *BinanceClient) Request(method, endpoint string, reqOpts ...func(*Reques
 }
 
 func NewAPIClient(hostType string, apiKey, secretKey string, opts ...func(*BinanceClient)) (*BinanceClient, error) {
-	var exchInfo *exchange_conn.ExchangeApi
+	var exchInfo *httpClient.ExchangeApi
 	switch hostType {
 	case consts.Spot:
-		exchInfo = &exchange_conn.ExchangeApi{
+		exchInfo = &httpClient.ExchangeApi{
 			Name:      string(consts.Binance),
 			HostType:  consts.Spot,
 			APIKey:    apiKey,
@@ -34,7 +34,7 @@ func NewAPIClient(hostType string, apiKey, secretKey string, opts ...func(*Binan
 		return nil, fmt.Errorf("hostType %s not supported", hostType)
 	}
 	client := &BinanceClient{
-		HttpClient: &exchange_conn.HttpClient[*Request]{
+		HttpClient: &httpClient.HttpClient[*Request]{
 			Client:     http.DefaultClient,
 			Exchange:   exchInfo,
 			NewRequest: NewRequest,

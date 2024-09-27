@@ -10,7 +10,7 @@ import (
 
 
 type ByBitClient struct{
-	*exchange_conn.HttpClient[*Request]
+	*httpClient.HttpClient[*Request]
 }
 
 func (c *ByBitClient) Request(method, endpoint string, reqOpts ...func(*Request)) *Request {
@@ -23,9 +23,9 @@ func (c *ByBitClient) Request(method, endpoint string, reqOpts ...func(*Request)
 
 func NewSpotClient(apiKey, secretKey string, apiOpts...func(*ByBitClient)) *ByBitClient {
 	client := &ByBitClient{
-		HttpClient: &exchange_conn.HttpClient[*Request]{
+		HttpClient: &httpClient.HttpClient[*Request]{
 			Client: http.DefaultClient,
-			Exchange: &exchange_conn.ExchangeApi{
+			Exchange: &httpClient.ExchangeApi{
 				Name: consts.Bybit,
 				HostType: consts.Spot,
 				APIKey: apiKey,

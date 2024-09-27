@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/lianyun0502/exchange_conn/v2"
+	"github.com/lianyun0502/exchange_conn/v2/data_format"
 	"github.com/lianyun0502/exchange_conn/v2/bybit/data_stream"
 )
 
@@ -40,7 +40,7 @@ func TestOrderBook(t *testing.T) {
 	}
 
 	ob := data_stream.NewOrderBook(10)
-	var obData *exchange_conn.OrderBookStream
+	var obData *format.OrderBookStream
 	for _, data := range rawData {
 		obData, _ = ob.Update(data)
 	}

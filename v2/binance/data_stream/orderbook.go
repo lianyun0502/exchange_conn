@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/duke-git/lancet/v2/maputil"
-	"github.com/lianyun0502/exchange_conn/v2"
+	"github.com/lianyun0502/exchange_conn/v2/data_format"
 	"github.com/valyala/fastjson"
 )
 
@@ -127,7 +127,7 @@ func (ob *OrderBookParser) cache(rawData []byte) error {
 	return nil
 }
 
-func (ob *OrderBookParser) Update(rawData []byte) (data *exchange_conn.OrderBookStream, err error) {
+func (ob *OrderBookParser) Update(rawData []byte) (data *format.OrderBookStream, err error) {
 	v, err := fastjson.ParseBytes(rawData)
 	if err != nil {
 		return nil, err
@@ -139,7 +139,7 @@ func (ob *OrderBookParser) Update(rawData []byte) (data *exchange_conn.OrderBook
 			return nil, err
 		}
 		if ob.isInit {
-			ret := new(exchange_conn.OrderBookStream)
+			ret := new(format.OrderBookStream)
 			data, err := p.ParseBytes(rawData)
 			if err != nil {
 				return nil, err
@@ -194,12 +194,12 @@ func NewPartialOrderBook(bestDepth int) *PartialOrderBook {
 	}
 }
 
-func (ob* PartialOrderBook) Update(rawData []byte) (data *exchange_conn.OrderBookStream, err error) {
+func (ob* PartialOrderBook) Update(rawData []byte) (data *format.OrderBookStream, err error) {
 	v, err := p.ParseBytes(rawData)
 	if err != nil {
 		return nil, err
 	}
-	data = &exchange_conn.OrderBookStream{
+	data = &format.OrderBookStream{
 		Bids: make(map[string]string),
 		Asks: make(map[string]string),
 	}

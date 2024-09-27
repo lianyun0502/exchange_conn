@@ -20,7 +20,7 @@ import (
 )
 
 type WsBinanceClient struct {
-	*exchange_conn.WsClient
+	*wsClient.WsClient
 	ReceiveWindow string
 }
 
