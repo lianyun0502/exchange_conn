@@ -33,6 +33,8 @@ type WsClient struct {
 
 	StopSignal  chan struct{}
 	StartSignal chan struct{}
+
+	PingMessage string
 }
 
 func (wsc *WsClient) OnOpen(socket *gws.Conn) {
@@ -57,7 +59,7 @@ func (wsc *WsClient) OnOpen(socket *gws.Conn) {
 			}
 		}
 	}()
-	socket.WritePing([]byte("ping"))
+	socket.WritePing([]byte(wsc.PingMessage))
 }
 func (wsc *WsClient) OnPing(socket *gws.Conn, message []byte) {
 	wsc.Logger.Info("OnPing")
@@ -68,7 +70,7 @@ func (wsc *WsClient) OnPong(socket *gws.Conn, message []byte) {
 	wsc.pingTimeout.Reset(6 * time.Second)
 	go func() {
 		time.Sleep(5 * time.Second)
-		socket.WritePing([]byte("ping"))
+		socket.WritePing([]byte(wsc.PingMessage))
 	}()
 }
 func (wsc *WsClient) OnMessage(socket *gws.Conn, message *gws.Message) {
@@ -144,7 +146,11 @@ func (wsc *WsClient) Reconnect() {
 }
 
 func (wsc *WsClient) Connect() (resp *http.Response, err error) {
-	wsc.Logger.Infof("Exchange Info :%#v", wsc.ExchangeInfo)
+	wsc.Logger.WithFields(logrus.Fields{
+		"exchange": wsc.ExchangeInfo.Name,
+		"hostType": wsc.ExchangeInfo.HostType,
+		"baseURL":  wsc.ExchangeInfo.BaseURL,
+	}).Info("Exchange Info")
 	wsc.ClientOption = &gws.ClientOption{
 		ReadBufferSize:   655350,
 		Addr:             wsc.ExchangeInfo.BaseURL,
@@ -172,6 +178,7 @@ func NewWsClient(exchangeInfo *ExchangeApi, wsHandler func(message []byte), clie
 		Ws_Handler:   wsHandler,
 		StartSignal:  make(chan struct{}, 5),
 		ReqMap:       make(map[string]chan []byte),
+		PingMessage:  "ping",
 	}
 	for _, opt := range clientOpts {
 		opt(client)

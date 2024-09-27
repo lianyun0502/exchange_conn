@@ -54,7 +54,7 @@ func TestBybitWsApiOrder(t *testing.T) {
 	assert.NotEqual(t, string(resp), "{}")
 
 	go func() {
-		time.Sleep(10 * time.Second)
+		time.Sleep(50 * time.Second)
 		client.Stop()
 	}()
 

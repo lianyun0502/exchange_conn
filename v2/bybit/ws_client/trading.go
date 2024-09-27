@@ -36,7 +36,12 @@ func NewWsAPIClient(hostType string, apiKey, secretKey string, opts ...func(*WsB
 
 
 func NewWsTradeClient(apiKey, secretKey string, opts ...func(*WsBybitClient)) (*WsBybitClient, error) {
-	return NewWsAPIClient(consts.Trade, apiKey, secretKey, opts...)
+	client, err := NewWsAPIClient(consts.Trade, apiKey, secretKey, opts...)
+	if err != nil {
+		return nil, err
+	}
+	client.PingMessage = `{"op":"ping"}`
+	return client, nil
 }
 
 func (wsc *WsBybitClient) Order(op string, args any) (respData []byte, err error) {
