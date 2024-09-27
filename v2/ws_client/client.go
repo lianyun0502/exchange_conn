@@ -43,8 +43,9 @@ func (wsc *WsClient) OnOpen(socket *gws.Conn) {
 	wsc.Logger.Info("OnOpen")
 	wsc.StopSignal = make(chan struct{})
 	wsc.pingTimeout = time.NewTimer(3 * time.Second)
-	if wsc.IsMsgTimeout {
-		wsc.msgTimout = time.NewTimer(5 * time.Minute)
+	wsc.msgTimout = time.NewTimer(5 * time.Minute)
+	if !wsc.IsMsgTimeout {
+		wsc.msgTimout.Stop()
 	}
 	go func() {
 		for {
@@ -81,7 +82,7 @@ func (wsc *WsClient) OnMessage(socket *gws.Conn, message *gws.Message) {
 	defer message.Close()
 	wsc.Logger.Debug("OnMessage")
 	if wsc.IsMsgTimeout {
-		wsc.msgTimout = time.NewTimer(5 * time.Minute)
+		wsc.msgTimout.Reset(5 * time.Minute)
 	}
 	rawData := make([]byte, message.Data.Len())
 	copy(rawData, message.Data.Bytes())
