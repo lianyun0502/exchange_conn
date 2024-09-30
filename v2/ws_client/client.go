@@ -69,10 +69,12 @@ func (wsc *WsClient) OnOpen(socket *gws.Conn) {
 func (wsc *WsClient) OnPing(socket *gws.Conn, message []byte) {
 	wsc.Logger.Info("OnPing")
 	socket.WritePong(message)
+	wsc.Logger.Debug(string(message))
 }
 func (wsc *WsClient) OnPong(socket *gws.Conn, message []byte) {
 	wsc.Logger.Info("OnPong")
 	wsc.pingTimeout.Reset(10 * time.Second)
+	wsc.Logger.Debug(string(message))
 	go func() {
 		time.Sleep(5 * time.Second)
 		socket.WritePing([]byte(wsc.PingMessage))
