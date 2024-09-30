@@ -66,7 +66,7 @@ func (wsc *WsClient) OnOpen(socket *gws.Conn) {
 		}
 	}()
 	// socket.WritePing([]byte(wsc.PingMessage))
-	wsc.Ping([]byte(wsc.PingMessage))
+	go wsc.Ping([]byte(wsc.PingMessage))
 }
 func (wsc *WsClient) OnPing(socket *gws.Conn, message []byte) {
 	wsc.Logger.Info("OnPing")
