@@ -37,6 +37,7 @@ type WsClient struct {
 	StartSignal chan struct{}
 
 	PingMessage string
+	Ping 	  func([]byte) error
 }
 
 func (wsc *WsClient) OnOpen(socket *gws.Conn) {
@@ -64,7 +65,8 @@ func (wsc *WsClient) OnOpen(socket *gws.Conn) {
 			}
 		}
 	}()
-	socket.WritePing([]byte(wsc.PingMessage))
+	// socket.WritePing([]byte(wsc.PingMessage))
+	wsc.Ping([]byte(wsc.PingMessage))
 }
 func (wsc *WsClient) OnPing(socket *gws.Conn, message []byte) {
 	wsc.Logger.Info("OnPing")
@@ -77,7 +79,7 @@ func (wsc *WsClient) OnPong(socket *gws.Conn, message []byte) {
 	wsc.Logger.Debug(string(message))
 	go func() {
 		time.Sleep(5 * time.Second)
-		socket.WritePing([]byte(wsc.PingMessage))
+		wsc.Ping([]byte(wsc.PingMessage))
 	}()
 }
 func (wsc *WsClient) OnMessage(socket *gws.Conn, message *gws.Message) {
@@ -189,6 +191,7 @@ func NewWsClient(exchangeInfo *ExchangeApi, wsHandler func(message []byte), clie
 		ReqMap:       make(map[string]chan []byte),
 		PingMessage:  "ping",
 	}
+	client.Ping = client.Conn.WritePing
 	for _, opt := range clientOpts {
 		opt(client)
 	}
