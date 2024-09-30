@@ -98,7 +98,7 @@ func (wsc *WsBybitClient) PingServer(msg []byte) (err error) {
 		wsc.OnClose(wsc.Conn, err)
 	case respData := <-wsc.ReqMap["pong"]:
 		resp := fastjson.MustParseBytes(respData)
-		if retCode := string(resp.GetStringBytes("retCode")); retCode != "0" {
+		if retCode := resp.GetInt("retCode"); retCode != 0 {
 			err = errors.New(string(resp.GetStringBytes("retMsg")))
 			wsc.OnClose(wsc.Conn, err)
 		}else{
