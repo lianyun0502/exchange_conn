@@ -88,6 +88,34 @@ func (wsc *WsBybitClient) Request(op string, header any, args any) (respData []b
 	delete(wsc.ReqMap, id)
 	return resp, err
 }
+func (wsc *WsBybitClient) StartLoop() {
+	wsc.WsClient.StartLoop()
+	go wsc.Ping()
+}
+
+func (wsc *WsBybitClient) Ping() (respData []byte, err error) {
+	wsc.ReqMap["pong"] = make(chan []byte, 2)
+	wsc.Send([]byte(`{"op":"ping"}`))
+	select {
+	case <-time.After(5 * time.Second):
+		wsc.Logger.Warning("Ping timeout")
+		err = errors.New("Ping timeout")
+		wsc.OnClose(wsc.Conn, err)
+	case respData = <-wsc.ReqMap["pong"]:
+		resp := fastjson.MustParseBytes(respData)
+		if retCode := string(resp.GetStringBytes("retCode")); retCode != "0" {
+			err = errors.New(string(resp.GetStringBytes("retMsg")))
+			wsc.OnClose(wsc.Conn, err)
+		}else{
+			go func() {
+				time.Sleep(20 * time.Second)
+				wsc.Ping()
+			}()
+		}
+	}
+	delete(wsc.ReqMap, "pong")
+	return respData, err
+}
 
 func IsTestNet() func(*WsBybitClient) {
 	return func(wsc *WsBybitClient) {
@@ -98,27 +126,6 @@ func IsTestNet() func(*WsBybitClient) {
 			wsc.ExchangeInfo.BaseURL = SPOT_TESTNET
 		case consts.Trade:
 			wsc.ExchangeInfo.BaseURL = WEBSOCKET_TRADE_TESTNET
-		}
-	}
-}
-
-func WithBybitHandler(reqMap map[string]chan []byte, qouteHandler func(message []byte)) func([]byte) {
-	return func(rawData []byte) {
-		v, _ := fastjson.ParseBytes(rawData)
-		if reqID := string(v.GetStringBytes("reqId")); reqID != "" {
-			if respCh, ok := reqMap[reqID]; ok {
-				respCh <- rawData
-				return
-			}
-		}
-		if reqID := string(v.GetStringBytes("req_id")); reqID != "" {
-			if respCh, ok := reqMap[reqID]; ok {
-				respCh <- rawData
-				return
-			}
-		}
-		if qouteHandler != nil {
-			qouteHandler(rawData)
 		}
 	}
 }
@@ -138,6 +145,10 @@ func WithWsHandle(qouteHandler func(message []byte)) func(*WsBybitClient) {
 					respCh <- rawData
 					return
 				}
+			}
+			if op := string(v.GetStringBytes("op")); op == "pong" {
+				client.ReqMap["pong"] <- rawData
+				return
 			}
 			if qouteHandler != nil {
 				qouteHandler(rawData)
