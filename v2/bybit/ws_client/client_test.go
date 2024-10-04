@@ -5,16 +5,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lianyun0502/exchange_conn/v2/common"
 	"github.com/lianyun0502/exchange_conn/v2/bybit/ws_client"
+	"github.com/lianyun0502/exchange_conn/v2/common"
 	"github.com/lianyun0502/exchange_conn/v2/consts"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
-
-var	apiKey = "L7ksyiOdEgqg0gwIbf"
-var	secretKey = "0CVhyQmkwUDKWLcAP6NhtH7jB0P8XqSIVxE1"
+var apiKey = "L7ksyiOdEgqg0gwIbf"
+var secretKey = "0CVhyQmkwUDKWLcAP6NhtH7jB0P8XqSIVxE1"
 
 var logger = &logrus.Logger{
 	Out: os.Stderr,
@@ -26,6 +25,7 @@ var logger = &logrus.Logger{
 	Level: logrus.DebugLevel,
 	Hooks: make(logrus.LevelHooks),
 }
+
 func TestBybitWsApiOrder(t *testing.T) {
 	client, _ := bybit.NewWsTradeClient(apiKey, secretKey, bybit.IsTestNet())
 	client.Logger = logger
@@ -58,21 +58,21 @@ func TestBybitWsApiOrder(t *testing.T) {
 		client.Stop()
 	}()
 
-	<- client.StopSignal
+	<-client.StopSignal
 }
 
 func TestBybitQuote(t *testing.T) {
 
 	handle := func(rawData []byte) {
-		logger.Infof(`%s`,string(rawData))
+		logger.Infof(`%s`, string(rawData))
 	}
-	
+
 	client, _ := bybit.NewWsQuoteClient(consts.Future, handle, bybit.IsTestNet())
 	client.Logger = logger
 	logger.SetLevel(logrus.DebugLevel)
 	client.Connect()
 
-	go func() {	
+	go func() {
 		for range client.StartSignal {
 			resp, err := client.Subscribe([]string{"orderbook.1.BTCUSDT", "publicTrade.BTCUSDT"})
 			if err != nil {
@@ -113,24 +113,56 @@ func BenchmarkBybitWsApiOrder(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		client.Order("order.create", []ParamMap{param})
 	}
-	
+
 }
 
 func TestPrivateWsQuote(t *testing.T) {
 	handle := func(rawData []byte) {
-		logger.Infof(`%s`,string(rawData))
+		logger.Infof(`%s`, string(rawData))
 	}
-	
+
 	client, _ := bybit.NewWsPrivateClient(apiKey, secretKey, bybit.IsTestNet(), bybit.WithWsHandle(handle))
 	client.Logger = logger
 	logger.SetLevel(logrus.DebugLevel)
 	client.Connect()
 
-
-	go func() {	
+	go func() {
 		for range client.StartSignal {
 			client.Auth()
 			resp, err := client.Subscribe([]string{"position"})
+			if err != nil {
+				t.Log(string(resp))
+				t.Error(err)
+				client.Stop()
+				return
+			}
+		}
+	}()
+
+	go client.StartLoop()
+
+	go func() {
+		time.Sleep(20 * time.Second)
+		client.Stop()
+	}()
+
+	common.WaitForClose(logger, client.StopSignal)
+}
+
+func TestPrivateWsTrade(t *testing.T) {
+	handle := func(rawData []byte) {
+		logger.Infof(`%s`, string(rawData))
+	}
+
+	client, _ := bybit.NewWsPrivateClient(apiKey, secretKey, bybit.IsTestNet(), bybit.WithWsHandle(handle))
+	client.Logger = logger
+	logger.SetLevel(logrus.DebugLevel)
+	client.Connect()
+
+	go func() {
+		for range client.StartSignal {
+			client.Auth()
+			resp, err := client.Subscribe([]string{"position", "execution"})
 			if err != nil {
 				t.Log(string(resp))
 				t.Error(err)
