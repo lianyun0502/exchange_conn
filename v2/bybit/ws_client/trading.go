@@ -20,6 +20,14 @@ func NewWsAPIClient(hostType string, apiKey, secretKey string, opts ...func(*WsB
 			SecretKey: secretKey,
 			BaseURL: WEBSOCKET_TRADE_MAINNET,
 		}
+		case consts.Private:
+		exchInfo = &wsClient.ExchangeApi{
+			Name: consts.Bybit,
+			HostType: consts.Private,
+			APIKey: apiKey,
+			SecretKey: secretKey,
+			BaseURL: WEBSOCKET_PRIVATE_MAINNET,
+		}
 		default:
 			return nil, fmt.Errorf("hostType error")
 	}
@@ -33,6 +41,7 @@ func NewWsAPIClient(hostType string, apiKey, secretKey string, opts ...func(*WsB
 	}
 	return client, nil
 }
+
 
 
 func NewWsTradeClient(apiKey, secretKey string, opts ...func(*WsBybitClient)) (*WsBybitClient, error) {

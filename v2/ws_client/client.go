@@ -178,6 +178,9 @@ func (wsc *WsClient) Connect() (resp *http.Response, err error) {
 	if err != nil {
 		wsc.Logger.WithFields(logrus.Fields{"respone": resp}).Error(err)
 	}
+	if wsc.Ping == nil {
+		wsc.Ping = wsc.Conn.WritePing
+	}
 	return resp, err
 }
 
@@ -191,7 +194,6 @@ func NewWsClient(exchangeInfo *ExchangeApi, wsHandler func(message []byte), clie
 		ReqMap:       make(map[string]chan []byte),
 		PingMessage:  "ping",
 	}
-	client.Ping = client.Conn.WritePing
 	for _, opt := range clientOpts {
 		opt(client)
 	}

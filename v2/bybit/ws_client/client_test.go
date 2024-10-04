@@ -115,3 +115,37 @@ func BenchmarkBybitWsApiOrder(b *testing.B) {
 	}
 	
 }
+
+func TestPrivateWsQuote(t *testing.T) {
+	handle := func(rawData []byte) {
+		logger.Infof(`%s`,string(rawData))
+	}
+	
+	client, _ := bybit.NewWsPrivateClient(apiKey, secretKey, bybit.IsTestNet(), bybit.WithWsHandle(handle))
+	client.Logger = logger
+	logger.SetLevel(logrus.DebugLevel)
+	client.Connect()
+
+
+	go func() {	
+		for range client.StartSignal {
+			client.Auth()
+			resp, err := client.Subscribe([]string{"position"})
+			if err != nil {
+				t.Log(string(resp))
+				t.Error(err)
+				client.Stop()
+				return
+			}
+		}
+	}()
+
+	go client.StartLoop()
+
+	go func() {
+		time.Sleep(20 * time.Second)
+		client.Stop()
+	}()
+
+	common.WaitForClose(logger, client.StopSignal)
+}

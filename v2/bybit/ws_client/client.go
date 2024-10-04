@@ -118,6 +118,8 @@ func IsTestNet() func(*WsBybitClient) {
 			wsc.ExchangeInfo.BaseURL = SPOT_TESTNET
 		case consts.Trade:
 			wsc.ExchangeInfo.BaseURL = WEBSOCKET_TRADE_TESTNET
+		case consts.Private:
+			wsc.ExchangeInfo.BaseURL = WEBSOCKET_PRIVATE_TESTNET
 		}
 	}
 }
