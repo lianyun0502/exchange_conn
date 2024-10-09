@@ -102,12 +102,12 @@ func BenchmarkBybitWsApiOrder(b *testing.B) {
 	client.Auth()
 	type ParamMap map[string]string
 	param := ParamMap{
-		"category":  "spot",
-		"symbol":    "BTCUSDT",
+		"category":  "linear",
+		"symbol":    "ADAUSDT",
 		"side":      "Buy",
-		"orderType": "Limit",
-		"qty":       "0.001",
-		"price":     "50000",
+		"orderType": "Market",
+		"qty":       "5.52",
+		// "price":     "50000",
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

@@ -17,6 +17,7 @@ import (
 type WsBybitClient struct {
 	*wsClient.WsClient
 	maxAliveTime string
+	IsSubscribed bool
 }
 
 func (wsc *WsBybitClient) Connect() (resp *http.Response, err error) {
@@ -36,11 +37,12 @@ func (wsc *WsBybitClient) Subscribe(topics []string) (respData []byte, err error
 	var resp []byte
 	select {
 	case <-time.After(5 * time.Second):
-		wsc.Logger.Warning("Request timeout")
+		wsc.Logger.Warning("Subscribe Request timeout")
 		err = errors.New("Request timeout")
 		close(respCh)
 	case resp = <-respCh:
 		wsc.Logger.Debugf(`Response: %s`, string(resp))
+		wsc.IsSubscribed = true
 	}
 	delete(wsc.ReqMap, id)
 	return resp, err
@@ -55,6 +57,7 @@ func (wsc *WsBybitClient) Auth() (respData []byte, err error) {
 	}
 	resp, err := wsc.Request("auth", nil, param)
 	if err != nil {
+		wsc.Logger.Warning("Auth Request timeout")
 		return nil, err
 	}
 	return resp, nil
@@ -145,7 +148,9 @@ func WithWsHandle(qouteHandler func(message []byte)) func(*WsBybitClient) {
 				return
 			}
 			if qouteHandler != nil {
-				qouteHandler(rawData)
+				if client.IsSubscribed {
+					qouteHandler(rawData)
+				}
 			}
 		}
 	}
