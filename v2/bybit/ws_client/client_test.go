@@ -155,14 +155,15 @@ func TestPrivateWsTrade(t *testing.T) {
 		logger.Infof(`%s`, string(rawData))
 	}
 
-	client, _ := bybit.NewWsPrivateClient(apiKey, secretKey, bybit.IsTestNet(), bybit.WithWsHandle(handle))
+	// client, _ := bybit.NewWsPrivateClient(apiKey, secretKey, bybit.IsTestNet(), bybit.WithWsHandle(handle))
+	client, _ := bybit.NewWsPrivateClient("L9THu88IZnbyg21MIt", "f4ViW6m6wDbTuTdeNlaKnOWFkvKH4DWJkD1k", bybit.WithWsHandle(handle))
 	client.Logger = logger
 	logger.SetLevel(logrus.DebugLevel)
 	client.Connect()
 
 	go func() {
 		for range client.StartSignal {
-			client.Auth(15)
+			client.Auth(5)
 			resp, err := client.Subscribe([]string{"position", "execution"})
 			if err != nil {
 				t.Log(string(resp))
@@ -176,7 +177,7 @@ func TestPrivateWsTrade(t *testing.T) {
 	go client.StartLoop()
 
 	go func() {
-		time.Sleep(20 * time.Second)
+		time.Sleep(60 * time.Second)
 		client.Stop()
 	}()
 

@@ -42,7 +42,7 @@ type WsClient struct {
 
 func (wsc *WsClient) OnOpen(socket *gws.Conn) {
 	wsc.Logger.Infof("%s: OnOpen", wsc.ExchangeInfo.HostType)
-	wsc.StopSignal = make(chan struct{})
+	wsc.StopSignal = make(chan struct{}, 1)
 	wsc.PingTimeout = time.NewTimer(3 * time.Second)
 	wsc.msgTimout = time.NewTimer(5 * time.Minute)
 	if !wsc.IsMsgTimeout {
@@ -99,10 +99,17 @@ func (wsc *WsClient) OnClose(socket *gws.Conn, err error) {
 	if err != nil {
 		wsc.Logger.Error(err)
 	}
-	if _, ok := <-wsc.StopSignal; ok {
+	select{
+	case _, ok := <-wsc.StopSignal:
+		if !ok {
+			return
+		}
+	default:
 		close(wsc.StopSignal)
 		wsc.Reconnect()
 	}
+	
+	
 }
 
 func (wsc *WsClient) StartLoop() {
