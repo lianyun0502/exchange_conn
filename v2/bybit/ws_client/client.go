@@ -100,11 +100,13 @@ func (wsc *WsBybitClient) WithPingServer() func(msg []byte) error {
 func (wsc *WsBybitClient) PingServer(msg []byte) (err error) {
 	wsc.Send([]byte(`{"op":"ping"}`))
 	select {
-	case <-time.After(5 * time.Second):
+	case <- time.After(5 * time.Second):
 		err = fmt.Errorf("%s: Ping server timeout", wsc.ExchangeInfo.HostType)
+		delete(wsc.ReqMap, "pong")
 		wsc.OnClose(wsc.Conn, err)
 	case respData := <-wsc.ReqMap["pong"]:
 		resp := fastjson.MustParseBytes(respData)
+		delete(wsc.ReqMap, "pong")
 		if retCode := resp.GetInt("retCode"); retCode != 0 {
 			err = fmt.Errorf("ping server failed, retCode=%d, retMsg:%s", retCode, string(resp.GetStringBytes("retMsg")))
 			wsc.OnClose(wsc.Conn, err)
@@ -112,7 +114,6 @@ func (wsc *WsBybitClient) PingServer(msg []byte) (err error) {
 			wsc.OnPong(wsc.Conn, respData)
 		}
 	}
-	delete(wsc.ReqMap, "pong")
 	return err
 }
 

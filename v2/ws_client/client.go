@@ -24,7 +24,7 @@ type WsClient struct {
 	reconnTimes int
 
 	Logger      *logrus.Logger
-	pingTimeout *time.Timer
+	PingTimeout *time.Timer
 
 	IsMsgTimeout bool
 	msgTimout   *time.Timer
@@ -43,7 +43,7 @@ type WsClient struct {
 func (wsc *WsClient) OnOpen(socket *gws.Conn) {
 	wsc.Logger.Info("OnOpen")
 	wsc.StopSignal = make(chan struct{})
-	wsc.pingTimeout = time.NewTimer(3 * time.Second)
+	wsc.PingTimeout = time.NewTimer(3 * time.Second)
 	wsc.msgTimout = time.NewTimer(5 * time.Minute)
 	if !wsc.IsMsgTimeout {
 		wsc.msgTimout.Stop()
@@ -51,16 +51,16 @@ func (wsc *WsClient) OnOpen(socket *gws.Conn) {
 	go func() {
 		for {
 			select {
-			case <-wsc.pingTimeout.C:
-				wsc.Logger.Warning("Ping server timeout")
-				wsc.pingTimeout.Stop()
+			case <-wsc.PingTimeout.C:
+				wsc.Logger.Warningf("%s: Ping server timeout", wsc.ExchangeInfo.HostType)
+				wsc.PingTimeout.Stop()
 				socket.NetConn().Close()
 			case <-wsc.msgTimout.C:
-				wsc.Logger.Warning("OnMessage timeout")
+				wsc.Logger.Warningf("%s: OnMessage timeout", wsc.ExchangeInfo.HostType)
 				wsc.msgTimout.Stop()
 				socket.NetConn().Close()
 			case <-wsc.StopSignal:
-				wsc.Logger.Info("stop loop")
+				wsc.Logger.Infof("%s: Stop loop", wsc.ExchangeInfo.HostType)
 				return
 			}
 		}
@@ -75,7 +75,7 @@ func (wsc *WsClient) OnPing(socket *gws.Conn, message []byte) {
 }
 func (wsc *WsClient) OnPong(socket *gws.Conn, message []byte) {
 	wsc.Logger.Info("OnPong")
-	wsc.pingTimeout.Reset(10 * time.Second)
+	wsc.PingTimeout.Reset(10 * time.Second)
 	wsc.Logger.Debug(string(message))
 	go func() {
 		time.Sleep(5 * time.Second)
