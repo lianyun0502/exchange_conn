@@ -92,17 +92,21 @@ func (wsc *WsBybitClient) Request(op string, header any, args any) (respData []b
 	return resp, err
 }
 
-func (wsc *WsBybitClient) PingServer(msg []byte) (err error) {
+func (wsc *WsBybitClient) WithPingServer() func(msg []byte) error {
 	wsc.ReqMap["pong"] = make(chan []byte, 2)
+	return wsc.PingServer
+}
+
+func (wsc *WsBybitClient) PingServer(msg []byte) (err error) {
 	wsc.Send([]byte(`{"op":"ping"}`))
 	select {
 	case <-time.After(5 * time.Second):
-		err = errors.New("ping server timeout")
+		err = fmt.Errorf("%s: Ping server timeout", wsc.ExchangeInfo.HostType)
 		wsc.OnClose(wsc.Conn, err)
 	case respData := <-wsc.ReqMap["pong"]:
 		resp := fastjson.MustParseBytes(respData)
 		if retCode := resp.GetInt("retCode"); retCode != 0 {
-			err = errors.New(string(resp.GetStringBytes("retMsg")))
+			err = fmt.Errorf("ping server failed, retCode=%d, retMsg:%s", retCode, string(resp.GetStringBytes("retMsg")))
 			wsc.OnClose(wsc.Conn, err)
 		}else{
 			wsc.OnPong(wsc.Conn, respData)

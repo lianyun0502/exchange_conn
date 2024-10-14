@@ -42,7 +42,7 @@ func NewWsTradeClient(apiKey, secretKey string, opts ...func(*WsBybitClient)) (*
 		return nil, err
 	}
 	client.PingMessage = `{"op":"ping"}`
-	client.Ping = client.PingServer
+	client.Ping = client.WithPingServer()
 	return client, nil
 }
 
