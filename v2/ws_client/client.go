@@ -41,7 +41,7 @@ type WsClient struct {
 }
 
 func (wsc *WsClient) OnOpen(socket *gws.Conn) {
-	wsc.Logger.Info("OnOpen")
+	wsc.Logger.Infof("%s: OnOpen", wsc.ExchangeInfo.HostType)
 	wsc.StopSignal = make(chan struct{})
 	wsc.PingTimeout = time.NewTimer(3 * time.Second)
 	wsc.msgTimout = time.NewTimer(5 * time.Minute)
@@ -74,7 +74,7 @@ func (wsc *WsClient) OnPing(socket *gws.Conn, message []byte) {
 	wsc.Logger.Debug(string(message))
 }
 func (wsc *WsClient) OnPong(socket *gws.Conn, message []byte) {
-	wsc.Logger.Info("OnPong")
+	wsc.Logger.Infof("%s: OnPong", wsc.ExchangeInfo.HostType)
 	wsc.PingTimeout.Reset(10 * time.Second)
 	wsc.Logger.Debug(string(message))
 	go func() {
@@ -95,7 +95,7 @@ func (wsc *WsClient) OnMessage(socket *gws.Conn, message *gws.Message) {
 	}
 }
 func (wsc *WsClient) OnClose(socket *gws.Conn, err error) {
-	wsc.Logger.Info("OnClose")
+	wsc.Logger.Infof("%s: OnClose", wsc.ExchangeInfo.HostType)
 	if err != nil {
 		wsc.Logger.Error(err)
 	}

@@ -42,7 +42,7 @@ func NewWsTradeClient(apiKey, secretKey string, opts ...func(*WsBybitClient)) (*
 		return nil, err
 	}
 	client.PingMessage = `{"op":"ping"}`
-	client.Ping = client.WithPingServer()
+	client.Ping = client.PingServer
 	return client, nil
 }
 
@@ -52,7 +52,7 @@ func (wsc *WsBybitClient) Order(op string, args any) (respData []byte, err error
 		RecvWindow: 8000,
 		Referer: "bot-001",
 	}
-	resp, err := wsc.Request(op, header, args)
+	resp, err := wsc.Request(op, header, args, 5)
 	if err != nil {
 		wsc.Logger.WithField("error", err).Error("Request failed")
 		return nil, err

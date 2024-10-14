@@ -55,15 +55,15 @@ func (wsc *WsBybitClient) Auth() (respData []byte, err error) {
 		strconv.FormatInt(expires, 10),
 		common.GetSignature(wsc.ExchangeInfo.SecretKey, fmt.Sprintf("GET/realtime%d", expires)),
 	}
-	resp, err := wsc.Request("auth", nil, param)
+	resp, err := wsc.Request("auth", nil, param, 10)
 	if err != nil {
-		wsc.Logger.Warning("Auth Request timeout")
+		wsc.Logger.Warningf("%s: Auth Request timeout", wsc.ExchangeInfo.HostType)
 		return nil, err
 	}
 	return resp, nil
 }
 
-func (wsc *WsBybitClient) Request(op string, header any, args any) (respData []byte, err error) {
+func (wsc *WsBybitClient) Request(op string, header any, args any, timeOut time.Duration) (respData []byte, err error) {
 	id := common.GetUUID()
 	req := &Request{
 		ReqID:  id,
@@ -81,7 +81,7 @@ func (wsc *WsBybitClient) Request(op string, header any, args any) (respData []b
 	wsc.Send(reqByte)
 	var resp []byte
 	select {
-	case <-time.After(5 * time.Second):
+	case <-time.After(timeOut * time.Second):
 		wsc.Logger.Warning("Request timeout")
 		err = errors.New("Request timeout")
 		close(respCh)
@@ -98,6 +98,7 @@ func (wsc *WsBybitClient) WithPingServer() func(msg []byte) error {
 }
 
 func (wsc *WsBybitClient) PingServer(msg []byte) (err error) {
+	wsc.ReqMap["pong"] = make(chan []byte, 2)
 	wsc.Send([]byte(`{"op":"ping"}`))
 	select {
 	case <- time.After(5 * time.Second):

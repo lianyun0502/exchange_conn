@@ -37,6 +37,7 @@ func TestBybitWsApiOrder(t *testing.T) {
 		t.Error(err)
 		return
 	}
+
 	type ParamMap map[string]string
 	param := ParamMap{
 		"category":  "spot",
