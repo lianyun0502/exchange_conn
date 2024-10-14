@@ -31,7 +31,7 @@ func TestBybitWsApiOrder(t *testing.T) {
 	client.Logger = logger
 	client.Connect()
 	go client.StartLoop()
-	resp, err := client.Auth()
+	resp, err := client.Auth(15)
 	if err != nil {
 		t.Log(string(resp))
 		t.Error(err)
@@ -100,7 +100,7 @@ func BenchmarkBybitWsApiOrder(b *testing.B) {
 	// logger.SetLevel(logrus.ErrorLevel)
 	client.Connect()
 	go client.StartLoop()
-	client.Auth()
+	client.Auth(15)
 	type ParamMap map[string]string
 	param := ParamMap{
 		"category":  "linear",
@@ -129,7 +129,7 @@ func TestPrivateWsQuote(t *testing.T) {
 
 	go func() {
 		for range client.StartSignal {
-			client.Auth()
+			client.Auth(15)
 			resp, err := client.Subscribe([]string{"position"})
 			if err != nil {
 				t.Log(string(resp))
@@ -162,7 +162,7 @@ func TestPrivateWsTrade(t *testing.T) {
 
 	go func() {
 		for range client.StartSignal {
-			client.Auth()
+			client.Auth(15)
 			resp, err := client.Subscribe([]string{"position", "execution"})
 			if err != nil {
 				t.Log(string(resp))

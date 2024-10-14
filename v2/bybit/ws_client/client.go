@@ -48,14 +48,14 @@ func (wsc *WsBybitClient) Subscribe(topics []string) (respData []byte, err error
 	return resp, err
 }
 
-func (wsc *WsBybitClient) Auth() (respData []byte, err error) {
+func (wsc *WsBybitClient) Auth(timeOut time.Duration) (respData []byte, err error) {
 	expires := time.Now().Unix()*1000 + 10000
 	param := []string{
 		wsc.ExchangeInfo.APIKey,
 		strconv.FormatInt(expires, 10),
 		common.GetSignature(wsc.ExchangeInfo.SecretKey, fmt.Sprintf("GET/realtime%d", expires)),
 	}
-	resp, err := wsc.Request("auth", nil, param, 10)
+	resp, err := wsc.Request("auth", nil, param, timeOut)
 	if err != nil {
 		wsc.Logger.Warningf("%s: Auth Request timeout", wsc.ExchangeInfo.HostType)
 		return nil, err
@@ -90,11 +90,6 @@ func (wsc *WsBybitClient) Request(op string, header any, args any, timeOut time.
 	}
 	delete(wsc.ReqMap, id)
 	return resp, err
-}
-
-func (wsc *WsBybitClient) WithPingServer() func(msg []byte) error {
-	wsc.ReqMap["pong"] = make(chan []byte, 2)
-	return wsc.PingServer
 }
 
 func (wsc *WsBybitClient) PingServer(msg []byte) (err error) {
