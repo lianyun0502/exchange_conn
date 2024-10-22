@@ -74,7 +74,7 @@ func (wsc *WsClient) OnPing(socket *gws.Conn, message []byte) {
 	wsc.Logger.Debug(string(message))
 }
 func (wsc *WsClient) OnPong(socket *gws.Conn, message []byte) {
-	wsc.Logger.Infof("%s: OnPong", wsc.ExchangeInfo.HostType)
+	wsc.Logger.Debugf("%s: OnPong", wsc.ExchangeInfo.HostType)
 	wsc.PingTimeout.Reset(10 * time.Second)
 	wsc.Logger.Debug(string(message))
 	go func() {
@@ -129,8 +129,8 @@ func (wsc *WsClient) Stop() (err error) {
 }
 
 func (wsc *WsClient) Send(msg []byte) (err error) {
-	wsc.Logger.Info("Send message")
-	wsc.Logger.Debugf(`Send message: %s`, string(msg))
+	// wsc.Logger.Info("Send message")
+	wsc.Logger.WithField("msg", string(msg)).Debug("Send message")
 	err = wsc.Conn.WriteMessage(gws.OpcodeText, msg)
 	if err != nil {
 		wsc.Logger.Error(err)
