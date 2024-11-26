@@ -163,7 +163,7 @@ func TestPrivateWsTrade(t *testing.T) {
 
 	go func() {
 		for range client.StartSignal {
-			client.Auth(5)
+			client.Auth(15)
 			resp, err := client.Subscribe([]string{"position", "execution"})
 			if err != nil {
 				t.Log(string(resp))

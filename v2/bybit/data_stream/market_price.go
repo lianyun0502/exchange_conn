@@ -1,77 +1,66 @@
 package data_stream
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
+	// "testing/quick"
 
 	"github.com/lianyun0502/exchange_conn/v2/data_format"
-	"github.com/valyala/fastjson"
+	// "github.com/valyala/fastjson"
 )
 
-func InitMarketPrice(v *fastjson.Value) (data *format.MarKetPriceStream, err error) {
+func InitMarketPrice(quote *Quote[Tickers]) (data *format.MarKetPriceStream, err error) {
 	var nextFundingTime int64
-	if v.GetStringBytes("data", "nextFundingTime") != nil {
-		nextFundingTime, err = strconv.ParseInt(string(v.GetStringBytes("data", "nextFundingTime")), 10, 64)
+	if quote.Data.NextFundingTime != "" {
+		nextFundingTime, err = strconv.ParseInt(quote.Data.NextFundingTime, 10, 64)
 		if err != nil {
 			return nil, err
 		}
 	}
 	data = &format.MarKetPriceStream{
-		Topic:           string(v.GetStringBytes("topic")),
-		Time:            v.GetInt64("ts"),
-		LastPrice:       string(v.GetStringBytes("data", "lastPrice")),
-		Symbol:          string(v.GetStringBytes("data", "symbol")),
-		MarketPrice:     string(v.GetStringBytes("data", "markPrice")),
-		IndexPrice:      string(v.GetStringBytes("data", "indexPrice")),
-		FundingRate:     string(v.GetStringBytes("data", "fundingRate")),
+		Topic:           quote.Topic,
+		Time:            quote.Time,
+		LastPrice:       quote.Data.LastPrice,
+		Symbol:          quote.Data.Symbol,
+		MarketPrice:     quote.Data.MarketPrice,
+		IndexPrice:      quote.Data.IndexPrice,
+		FundingRate:     quote.Data.FundingRate,
 		NextFundingTime: nextFundingTime,
 	}
 	return data, nil
 }
 
-func UpdateMarketPrice(v *fastjson.Value, m map[string]*format.MarKetPriceStream) (data *format.MarKetPriceStream, err error) {
-	var d *format.MarKetPriceStream
-	symbol := v.GetStringBytes("data", "symbol")
-	if symbol != nil {
-		d = m[string(symbol)]
-		d.Symbol = string(symbol)
+func UpdateMarketPrice(quote *Quote[Tickers], m map[string]*format.MarKetPriceStream) (data *format.MarKetPriceStream, err error) {
+	if d, ok := m[quote.Data.Symbol]; ok{
+		data = d
+		data.Symbol = quote.Data.Symbol
 	}else{
 		return nil, fmt.Errorf("symbol is nil")
 	}
-	nft := v.GetStringBytes("data", "nextFundingTime")
-	if nft != nil {
-		nextFundingTime, err := strconv.ParseInt(string(nft), 10, 64)
+	if quote.Data.NextFundingTime != "" {
+		nextFundingTime, err := strconv.ParseInt(quote.Data.NextFundingTime, 10, 64)
 		if err != nil {
 			return nil, err
 		}
-		d.NextFundingTime = nextFundingTime
+		data.NextFundingTime = nextFundingTime
 	}
 
-	topic := v.GetStringBytes("topic")
-	if topic != nil {
-		d.Topic = string(topic)
+	if quote.Data.LastPrice != "" {
+		data.LastPrice = quote.Data.LastPrice
 	}
-	ts := v.GetInt64("ts")
-	if ts != 0 {
-		d.Time = ts
+	if quote.Data.MarketPrice != "" {
+		data.MarketPrice = quote.Data.MarketPrice
 	}
-	lastPrice := v.GetStringBytes("data", "lastPrice")
-	if lastPrice != nil {
-		d.LastPrice = string(lastPrice)
+	if quote.Data.IndexPrice != "" {
+		data.IndexPrice = quote.Data.IndexPrice
 	}
-	markPrice := v.GetStringBytes("data", "markPrice")
-	if markPrice != nil {
-		d.MarketPrice = string(markPrice)
+	if quote.Data.FundingRate != "" {
+		data.FundingRate = quote.Data.FundingRate
 	}
-	indexPrice := v.GetStringBytes("data", "indexPrice")
-	if indexPrice != nil {
-		d.IndexPrice = string(indexPrice)
-	}
-	fundingRate := v.GetStringBytes("data", "fundingRate")
-	if fundingRate != nil {
-		d.FundingRate = string(fundingRate)
-	}
-	return d, nil
+	data.Topic = quote.Topic
+	data.Time = quote.Time
+	return data, nil
 }
 
 type MarketData struct {
@@ -84,17 +73,35 @@ func NewMarketData() *MarketData {
 }
 
 func (md *MarketData) Update(rawData []byte) (*format.MarKetPriceStream, error) {
-	v := fastjson.MustParseBytes(rawData)
-	switch string(v.GetStringBytes("type")) {
+	tickers := new(Quote[Tickers])
+	json.Unmarshal(rawData, tickers)
+	// v := fastjson.MustParseBytes(rawData)
+	switch string(tickers.Type) {
 	case "snapshot":
-		ret, err := InitMarketPrice(v)
+		ret, err := InitMarketPrice(tickers)
 		md.Data[ret.Symbol] = ret
 		return ret, err
 	case "delta":
 		if md.Data == nil {
 			return nil, nil
 		}
-		return UpdateMarketPrice(v, md.Data)
+		return UpdateMarketPrice(tickers, md.Data)
 	}
 	return nil, nil
+}
+
+type Quote [T any] struct {
+	Topic string `json:"topic"`
+	Type string `json:"type"`
+	Data T `json:"data"`
+	Time int64 `json:"ts"`
+}
+
+type Tickers struct {
+	Symbol string `json:"symbol"`
+	MarketPrice string `json:"markPrice"`
+	IndexPrice string `json:"indexPrice"`
+	FundingRate string `json:"fundingRate"`
+	LastPrice string `json:"lastPrice"`
+	NextFundingTime string `json:"nextFundingTime"`
 }
