@@ -156,9 +156,10 @@ func WithWsHandle(qouteHandler func(message []byte)) func(*WsBybitClient) {
 				return
 			}
 			if qouteHandler != nil {
-				if client.IsSubscribed {
-					qouteHandler(rawData)
-				}
+				// if client.IsSubscribed {
+				// 	qouteHandler(rawData)
+				// }
+				qouteHandler(rawData)
 			}
 		}
 	}
