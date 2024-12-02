@@ -16,7 +16,7 @@ func WithQuery(query map[string]string) func(queryMap map[string]string) {
 	}
 }
 
-func (api *ByBitClient) InsLoan_RepaidHistory(opts ...func(map[string]string)) (*RepayInfo, error) {
+func (api *ByBitClient) InsLoan_RepaidHistory(opts ...func(map[string]string)) ([]RepayInfo, error) {
 	req := api.Request(http.MethodGet, "/v5/ins-loan/repaid-history", SetSercurityType(true, true))
 	query := make(httpClient.QueryMap)
 	for _, opt := range opts {
@@ -28,7 +28,7 @@ func (api *ByBitClient) InsLoan_RepaidHistory(opts ...func(map[string]string)) (
 		api.Log.Error(err)
 		return nil, err
 	}
-	ret := new(Response[*RepayInfo])
+	ret := new(Response[*ReplayInfoResponse])
 	json.Unmarshal(resp, ret)
 	if ret.RetCode != 0 {
 		api.Log.WithFields(logrus.Fields{
@@ -37,7 +37,7 @@ func (api *ByBitClient) InsLoan_RepaidHistory(opts ...func(map[string]string)) (
 		}).Warning("InsLoan_RepaidHistory")
 		return nil, errors.New(ret.RetMsg)
 	}
-	return ret.Results, nil
+	return ret.Results.RepayInfo, nil
 }
 
 /*

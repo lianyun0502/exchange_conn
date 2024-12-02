@@ -189,7 +189,9 @@ type RiskLimitResponse struct {
 	NextPageCursor string      `json:"nextPageCursor"`
 	RiskLimit      []RiskLimit `json:"list"`
 }
-
+type ReplayInfoResponse struct {
+	RepayInfo []RepayInfo `json:"repayInfo"`
+}
 type RepayInfo struct {
 	OrderID  string `json:"repayOrderId,omitempty"`
 	Time     string `json:"repayTime,omitempty"`
