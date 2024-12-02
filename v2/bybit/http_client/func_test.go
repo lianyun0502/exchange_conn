@@ -15,3 +15,13 @@ func TestMarket_PremiumIndexPrice(t *testing.T) {
 		return
 	}
 }
+
+func TestMarket_InstrumentInfo(t *testing.T) {
+	api := bybit.NewSpotClient(apiKey, secretKey, bybit.IsTestNet())
+	resp, err := api.Market_InstrumentsInfo("spot")
+	if err != nil {
+		t.Error(resp)
+		return
+	}
+}
+

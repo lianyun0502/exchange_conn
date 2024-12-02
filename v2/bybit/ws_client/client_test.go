@@ -9,7 +9,6 @@ import (
 	"github.com/lianyun0502/exchange_conn/v2/common"
 	"github.com/lianyun0502/exchange_conn/v2/consts"
 	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
 )
 
 var apiKey = "L7ksyiOdEgqg0gwIbf"
@@ -47,12 +46,12 @@ func TestBybitWsApiOrder(t *testing.T) {
 		"qty":       "0.001",
 		"price":     "50000",
 	}
-	resp, err = client.Order("order.create", []ParamMap{param})
+	resp2, err := client.Order("order.create", []ParamMap{param})
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	assert.NotEqual(t, string(resp), "{}")
+	t.Log(string(resp2.OrderID))
 
 	go func() {
 		time.Sleep(50 * time.Second)

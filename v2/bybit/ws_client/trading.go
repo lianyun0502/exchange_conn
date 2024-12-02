@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"time"
 	"fmt"
+	"encoding/json"
 
 	"github.com/valyala/fastjson"
 	"github.com/lianyun0502/exchange_conn/v2/consts"
@@ -46,7 +47,7 @@ func NewWsTradeClient(apiKey, secretKey string, opts ...func(*WsBybitClient)) (*
 	return client, nil
 }
 
-func (wsc *WsBybitClient) Order(op string, args any) (respData []byte, err error) {
+func (wsc *WsBybitClient) order(op string, args any) (respData []byte, err error) {
 	header := &RequestHeader{
 		Timestamp: time.Now().UnixMilli(),
 		RecvWindow: 8000,
@@ -63,6 +64,21 @@ func (wsc *WsBybitClient) Order(op string, args any) (respData []byte, err error
 		wsc.Logger.WithField("retMsg", retMsg).Warn("Request failed")
 	}
 	return resp, nil
+}
+
+func (wsc *WsBybitClient) Order(op string, args any) (*CreateOrderResponse, error) {
+	respData, err := wsc.order(op, args)
+	if err != nil {
+		return nil, err
+	}
+	resp := new(WsResponse[*CreateOrderResponse])
+	if err = json.Unmarshal(respData, resp); err != nil {
+		return nil, err
+	}
+	if resp.RetCode != 0 {
+		return nil, fmt.Errorf("retCode=%d, retMsg=%s", resp.RetCode, resp.RetMsg)
+	}
+	return resp.Data, nil
 }
 
 
@@ -94,18 +110,18 @@ type Response struct {
 }
 
 
-func Order(category, symbol, side, orderType, qty string, orderOpts...func(map[string]string)) map[string]string {
-	args := make(map[string]string)
-	args["category"] = category
-	args["symbol"] = symbol
-	args["side"] = side
-	args["orderType"] = orderType
-	args["qty"] = qty
-	for _, opt := range orderOpts {
-		opt(args)
-	}
-	return args
-}
+// func Order(category, symbol, side, orderType, qty string, orderOpts...func(map[string]string)) map[string]string {
+// 	args := make(map[string]string)
+// 	args["category"] = category
+// 	args["symbol"] = symbol
+// 	args["side"] = side
+// 	args["orderType"] = orderType
+// 	args["qty"] = qty
+// 	for _, opt := range orderOpts {
+// 		opt(args)
+// 	}
+// 	return args
+// }
 
 /*
 是否借貸. 僅統一帳戶的現貨交易有效. 
@@ -154,3 +170,15 @@ func Price(price string) func(map[string]string) {
 // 		args["triggerDirection"] = direction
 // 	}
 // }
+
+type CreateOrderResponse struct {
+	OrderID     string `json:"orderId,omitempty"`
+	OrderLinkID string `json:"orderLinkId,omitempty"`
+}
+
+type WsResponse[Res any] struct {
+	RetCode int    `json:"retCode"`
+	RetMsg  string `json:"retMsg"`
+	Results Res    `json:"result"`
+	Data    Res    `json:"data"`
+}

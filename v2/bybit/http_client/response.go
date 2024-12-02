@@ -36,7 +36,7 @@ type VipCoin struct {
 type InstrumentInfoResponse struct {
 	Category       string            `json:"category"`
 	NextPageCursor string            `json:"nextPageCursor"`
-	List           []*InstrumentInfo `json:"list"`
+	List           []InstrumentInfo `json:"list"`
 }
 type InstrumentInfo struct {
 	Symbol           string        `json:"symbol"`
@@ -95,4 +95,110 @@ type IndexPrice struct {
 	HighPrice   string
 	LowPrice    string
 	EndPrice    string
+}
+
+
+type WalletResponse struct {
+	List []*Wallet `json:"list"`
+}
+
+type Wallet struct {
+	AccountType            string  `json:"accountType"`
+	AccountIMRate          string  `json:"accountIMRate"`
+	AccountMMRate          string  `json:"accountMMRate"`
+	TotalEquity            string  `json:"totalEquity"`
+	TotalBalance           string  `json:"totalWalletBalance"`
+	TotalMarginBalance     string  `json:"totalMarginBalance"`
+	TotalAvailableBalance  string  `json:"totalAvailableBalance"`
+	TotalPerpUPL           string  `json:"totalPerpUPL"`
+	TotalInitialMargin     string  `json:"totalInitialMargin"`
+	TotalMaintenanceMargin string  `json:"totalMaintenanceMargin"`
+	Coins                  []*Coin `json:"coin"`
+}
+
+type Coin struct {
+	Coin            string `json:"coin"`
+	Equity          string `json:"equity"`
+	USDValue        string `json:"usdValue"`
+	Walletbalance   string `json:"walletbalance"`
+	BorrowAmount    string `json:"borrowAmount"`
+	TotalPositionIM string `json:"totalPositionIM"`
+	TotalPositionMM string `json:"totalPositionMM"`
+	AccruedInterest string `json:"accruedInterest"`
+	Free            string `json:"free"`
+}
+
+type MarginTrade struct {
+	Leverage          string `json:"spotLeverage"`
+	MarginMode        string `json:"spotMarginMode"`
+	EffectiveLeverage string `json:"effectiveLeverage"`
+}
+
+
+type PositionResponse struct {
+	Category  string      `json:"category,omitempty"`
+	Positions []*Position `json:"list,omitempty"`
+}
+type Position struct {
+	Symbol        string `json:"symbol,omitempty"`
+	Side          string `json:"side,omitempty"`
+	Size          string `json:"size,omitempty"`
+	TradeMode     int    `json:"tradeMode,omitempty"`
+	PositionValue string `json:"positionValue,omitempty"`
+	Leverage      string `json:"leverage,omitempty"`
+	PositionIM    string `json:"positionIM,omitempty"`
+	PositionMM    string `json:"positionMM,omitempty"`
+	CreateTime    string `json:"createdTime,omitempty"`
+	UpdateTime    string `json:"updatedTime,omitempty"`
+	SeqNum        int    `json:"seq,omitempty"`
+}
+
+
+type TransactionResponse struct {
+	Transactions   []Transactions `json:"list,omitempty"`
+	NextPageCursor string          `json:"nextPageCursor,omitempty"`
+}
+
+type Transactions struct {
+	ID              string `json:"id,omitempty"`
+	TradeID         string `json:"tradeId,omitempty"`
+	Category        string `json:"category,omitempty"`
+	Symbol          string `json:"symbol,omitempty"`
+	Side            string `json:"side,omitempty"`
+	OrderID         string `json:"orderId,omitempty"`
+	Fee             string `json:"fee,omitempty"`
+	CashFlow        string `json:"cashFlow,omitempty"`
+	FeeRate         string `json:"feeRate,omitempty"`
+	Funding         string `json:"funding,omitempty"`
+	Type            string `json:"type,omitempty"`
+	TransactionTime string `json:"transactionTime,omitempty"`
+	Change          string `json:"change,omitempty"`
+	Currency        string `json:"currency,omitempty"`
+}
+
+type RiskLimit struct {
+	ID             int    `json:"id"`
+	Symbol         string `json:"symbol"`
+	RiskLimitValue string `json:"riskLimitValue"`
+	MM             string `json:"maintenanceMargin"`
+	IM             string `json:"initialMargin"`
+	IsLowestRisk   int    `json:"isLowestRisk"`
+	MaxLeverage    string `json:"maxLeverage"`
+	MMDeduction    string `json:"mmDeduction"`
+}
+
+type RiskLimitResponse struct {
+	Category       string       `json:"category"`
+	NextPageCursor string       `json:"nextPageCursor"`
+	RiskLimit      []RiskLimit `json:"list"`
+}
+
+type RepayInfo struct {
+	OrderID  string `json:"repayOrderId,omitempty"`
+	Time     string `json:"repayTime,omitempty"`
+	Token    string `json:"repayToken,omitempty"`
+	Qty      string `json:"quantity,omitempty"`
+	Interest string `json:"interest,omitempty"`
+	Type     string `json:"businessType,omitempty"`
+	Status   string `json:"status,omitempty"`
 }
