@@ -3,9 +3,9 @@ package bybit
 import (
 	"encoding/json"
 	"errors"
+	"net/http"
 	"github.com/lianyun0502/exchange_conn/v2/http_client"
 	"github.com/sirupsen/logrus"
-	"net/http"
 )
 
 func WithQuery(query map[string]string) func(queryMap map[string]string) {
@@ -111,6 +111,30 @@ func (api *ByBitClient) MarginTrade_Data(opts ...func(map[string]string)) (*Marg
 		return nil, errors.New(ret.RetMsg)
 	}
 	return ret.Results, nil
+}
+
+// https://bybit-exchange.github.io/docs/zh-TW/v5/market/tickers
+func (api *ByBitClient) Market_Tickers(category string)([]Ticker, error){
+	req := api.Request(http.MethodGet, "/v5/market/tickers")
+	query := httpClient.QueryMap{
+		"category": category,
+	}
+	req.SetQuery(query)
+	resp, err := req.Send()
+	if err != nil {
+		api.Log.Error(err)
+		return nil, err
+	}
+	ret := new(Response[*TickerResponse])
+	json.Unmarshal(resp, ret)
+	if ret.RetCode != 0 {
+		api.Log.WithFields(logrus.Fields{
+			"retCode": ret.RetCode,
+			"retMsg":  ret.RetMsg,
+		}).Warning("Market_Tickers")
+		return nil, errors.New(ret.RetMsg)
+	}
+	return ret.Results.List, nil
 }
 
 // https://bybit-exchange.github.io/docs/zh-TW/v5/market/instrument

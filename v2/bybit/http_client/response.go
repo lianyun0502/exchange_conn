@@ -34,8 +34,8 @@ type VipCoin struct {
 }
 
 type InstrumentInfoResponse struct {
-	Category       string            `json:"category"`
-	NextPageCursor string            `json:"nextPageCursor"`
+	Category       string           `json:"category"`
+	NextPageCursor string           `json:"nextPageCursor"`
 	List           []InstrumentInfo `json:"list"`
 }
 type InstrumentInfo struct {
@@ -97,7 +97,6 @@ type IndexPrice struct {
 	EndPrice    string
 }
 
-
 type WalletResponse struct {
 	List []*Wallet `json:"list"`
 }
@@ -134,7 +133,6 @@ type MarginTrade struct {
 	EffectiveLeverage string `json:"effectiveLeverage"`
 }
 
-
 type PositionResponse struct {
 	Category  string      `json:"category,omitempty"`
 	Positions []*Position `json:"list,omitempty"`
@@ -153,10 +151,9 @@ type Position struct {
 	SeqNum        int    `json:"seq,omitempty"`
 }
 
-
 type TransactionResponse struct {
 	Transactions   []Transactions `json:"list,omitempty"`
-	NextPageCursor string          `json:"nextPageCursor,omitempty"`
+	NextPageCursor string         `json:"nextPageCursor,omitempty"`
 }
 
 type Transactions struct {
@@ -188,8 +185,8 @@ type RiskLimit struct {
 }
 
 type RiskLimitResponse struct {
-	Category       string       `json:"category"`
-	NextPageCursor string       `json:"nextPageCursor"`
+	Category       string      `json:"category"`
+	NextPageCursor string      `json:"nextPageCursor"`
 	RiskLimit      []RiskLimit `json:"list"`
 }
 
@@ -201,4 +198,13 @@ type RepayInfo struct {
 	Interest string `json:"interest,omitempty"`
 	Type     string `json:"businessType,omitempty"`
 	Status   string `json:"status,omitempty"`
+}
+
+type Ticker struct {
+	Symbol string `json:"symbol"`
+	FR     string `json:"fundingRate"`
+}
+
+type TickerResponse struct {
+	List []Ticker `json:"list"`
 }
