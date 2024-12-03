@@ -17,7 +17,7 @@ type InterestHistory struct {
 }
 
 type MarginTradeDataResponse struct {
-	VipCoinList []*VipCoinList `json:"vipCoinList"`
+	VipCoinList []VipCoinList `json:"vipCoinList"`
 }
 type VipCoinList struct {
 	VipLevel string     `json:"vipLevel"`

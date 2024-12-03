@@ -89,7 +89,7 @@ func (api *ByBitClient) MarginTrade_State() (*MarginTrade, error) {
 }
 
 /*https://bybit-exchange.github.io/docs/zh-TW/v5/spot-margin-uta/vip-margin*/
-func (api *ByBitClient) MarginTrade_Data(opts ...func(map[string]string)) (*MarginTradeDataResponse, error) {
+func (api *ByBitClient) MarginTrade_Data(opts ...func(map[string]string)) ([]VipCoinList, error) {
 	req := api.Request(http.MethodGet, "/v5/spot-margin-trade/data")
 	query := make(httpClient.QueryMap)
 	for _, opt := range opts {
@@ -110,14 +110,17 @@ func (api *ByBitClient) MarginTrade_Data(opts ...func(map[string]string)) (*Marg
 		}).Warning("MarginTrade_Data")
 		return nil, errors.New(ret.RetMsg)
 	}
-	return ret.Results, nil
+	return ret.Results.VipCoinList, nil
 }
 
 // https://bybit-exchange.github.io/docs/zh-TW/v5/market/tickers
-func (api *ByBitClient) Market_Tickers(category string)([]Ticker, error){
+func (api *ByBitClient) Market_Tickers(category string, opts ...func(map[string]string))([]Ticker, error){
 	req := api.Request(http.MethodGet, "/v5/market/tickers")
 	query := httpClient.QueryMap{
 		"category": category,
+	}
+	for _, opt := range opts {
+		opt(query)
 	}
 	req.SetQuery(query)
 	resp, err := req.Send()
