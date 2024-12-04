@@ -66,6 +66,9 @@ func (api *ByBitClient) MarginTrade_InterestRateHistory(currency string, opts ..
 		}).Warning("MarginTrade_InterestRateHistory")
 		return nil, errors.New(ret.RetMsg)
 	}
+	if ret.Results == nil {
+		return nil, errors.New("no data")
+	}
 	return ret.Results, nil
 }
 
@@ -110,6 +113,9 @@ func (api *ByBitClient) MarginTrade_Data(opts ...func(map[string]string)) ([]Vip
 			"retMsg":  ret.RetMsg,
 		}).Warning("MarginTrade_Data")
 		return nil, errors.New(ret.RetMsg)
+	}
+	if ret.Results == nil {
+		return nil, errors.New("no data")
 	}
 	return ret.Results.VipCoinList, nil
 }
