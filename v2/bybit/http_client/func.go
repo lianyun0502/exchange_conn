@@ -358,7 +358,7 @@ func (api *ByBitClient) Account_TransactionLog(category string, opts ...func(map
 
 // https://bybit-exchange.github.io/docs/zh-TW/v5/position
 func (api *ByBitClient) Position_List (category string, opts ...func(map[string]string)) (*PositionResponse, error) {
-	req := api.Request(http.MethodGet, "/v5/position/list")
+	req := api.Request(http.MethodGet, "/v5/position/list", SetSercurityType(true, true))
 	query := httpClient.QueryMap{
 		"category": category,
 	}
