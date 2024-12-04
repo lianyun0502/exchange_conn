@@ -210,3 +210,31 @@ type Ticker struct {
 type TickerResponse struct {
 	List []Ticker `json:"list"`
 }
+
+type ExecutionResponse struct {
+	List []*Execution `json:"list"`
+	Category string `json:"category"`
+	NextPageCursor string `json:"nextPageCursor"`
+}
+
+type Execution struct {
+	Category    string  `json:"category,omitempty"`
+	Symbol      string  `json:"symbol,omitempty"`
+	IsLeverage  string  `json:"isLeverage,omitempty"`
+	Side        string  `json:"side,omitempty"`
+	OrderID     string  `json:"orderId,omitempty"`
+	OrderLinkID string  `json:"orderLinkId,omitempty"`
+	OrderQty    float64 `json:"orderQty,omitempty,string"`
+	LeavesQty   float64 `json:"leavesQty,omitempty,string"`
+	OrderType   string  `json:"orderType,omitempty"`
+	ExecType    string  `json:"execType,omitempty"`
+	ExecPnL     string  `json:"execPnL,omitempty"`
+	ExecFee     string  `json:"execFee,omitempty"`
+	ExecID      string  `json:"execId,omitempty"`
+	ExecPrice   float64 `json:"execPrice,omitempty,string"`
+	ExecQty     float64 `json:"execQty,omitempty,string"`
+	ExecTime    string  `json:"execTime,omitempty"`
+	FeeRate     string  `json:"feeRate,omitempty"`
+	IsMaker     bool    `json:"isMaker,omitempty"`
+	SeqNum      int     `json:"seq,omitempty"`
+}

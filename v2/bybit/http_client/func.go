@@ -382,3 +382,48 @@ func (api *ByBitClient) Position_List (category string, opts ...func(map[string]
 	return ret.Results, nil
 }
 
+// https://bybit-exchange.github.io/docs/zh-TW/v5/order/execution
+func (api *ByBitClient) Trade_ExecutionList(category string, opts ...func(map[string]string)) ([]*Execution, error) {
+	req := api.Request(http.MethodGet, "/v5/execution/list", SetSercurityType(true, true))
+	query := httpClient.QueryMap{
+		"category": category,
+	}
+	for _, opt := range opts {
+		opt(query)
+	}
+	req.SetQuery(query)
+	resp, err := req.Send()
+	if err != nil {
+		api.Log.Error(err)
+		return nil, err
+	}
+	ret := new(Response[ExecutionResponse])
+	json.Unmarshal(resp, ret)
+	if ret.RetCode != 0 {
+		api.Log.WithFields(logrus.Fields{
+			"retCode": ret.RetCode,
+			"retMsg":  ret.RetMsg,
+		}).Warning("Trade_ExecutionList")
+		return nil, errors.New(ret.RetMsg)
+	}
+	if ret.Results.NextPageCursor != "" {
+		query["cursor"] = ret.Results.NextPageCursor
+		req.SetQuery(query)
+		resp, err := req.Send()
+		if err != nil {
+			api.Log.Error(err)
+			return nil, err
+		}
+		r := new(Response[ExecutionResponse])
+		json.Unmarshal(resp, r)
+		if r.RetCode != 0 {
+			api.Log.WithFields(logrus.Fields{
+				"retCode": r.RetCode,
+				"retMsg":  r.RetMsg,
+			}).Warning("Market_InstrumentsInfo")
+			return nil, errors.New(r.RetMsg)
+		}
+		ret.Results.List = append(ret.Results.List, r.Results.List...)
+	}
+	return ret.Results.List, nil
+}
