@@ -57,7 +57,7 @@ func (api *ByBitClient) MarginTrade_InterestRateHistory(currency string, opts ..
 		api.Log.Error(err)
 		return nil, err
 	}
-	ret := new(Response[*InterestHistoryResponce])
+	ret := new(Response[InterestHistoryResponce])
 	json.Unmarshal(resp, ret)
 	if ret.RetCode != 0 {
 		api.Log.WithFields(logrus.Fields{
@@ -66,10 +66,7 @@ func (api *ByBitClient) MarginTrade_InterestRateHistory(currency string, opts ..
 		}).Warning("MarginTrade_InterestRateHistory")
 		return nil, errors.New(ret.RetMsg)
 	}
-	if ret.Results == nil {
-		return nil, errors.New("no data")
-	}
-	return ret.Results, nil
+	return &ret.Results, nil
 }
 
 // https://bybit-exchange.github.io/docs/zh-TW/v5/spot-margin-uta/status
@@ -105,7 +102,7 @@ func (api *ByBitClient) MarginTrade_Data(opts ...func(map[string]string)) ([]Vip
 		api.Log.Error(err)
 		return nil, err
 	}
-	ret := new(Response[*MarginTradeDataResponse])
+	ret := new(Response[MarginTradeDataResponse])
 	json.Unmarshal(resp, ret)
 	if ret.RetCode != 0 {
 		api.Log.WithFields(logrus.Fields{
@@ -113,9 +110,6 @@ func (api *ByBitClient) MarginTrade_Data(opts ...func(map[string]string)) ([]Vip
 			"retMsg":  ret.RetMsg,
 		}).Warning("MarginTrade_Data")
 		return nil, errors.New(ret.RetMsg)
-	}
-	if ret.Results == nil {
-		return nil, errors.New("no data")
 	}
 	return ret.Results.VipCoinList, nil
 }
