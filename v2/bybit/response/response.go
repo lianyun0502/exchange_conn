@@ -238,3 +238,19 @@ type Execution struct {
 	IsMaker     bool    `json:"isMaker,omitempty"`
 	SeqNum      int     `json:"seq,omitempty"`
 }
+
+type Order struct {
+	Symbol       string `json:"symbol"`
+	OrderID      string `json:"orderId"`
+	OrderType    string `json:"orderType"`
+	CancelType   string `json:"cancelType"`
+	Price        string `json:"price"`
+	Qty          string `json:"qty"`
+	TimeInForce  string `json:"timeInForce"`
+	OrderStatus  string `json:"orderStatus"`
+	ReduceOnly   bool   `json:"reduceOnly"`
+	Side         string `json:"side"`
+	RejectReason string `json:"rejectReason"`
+	CreateTime   string `json:"createdTime"`
+	UpdateTime   string `json:"updatedTime"`
+}

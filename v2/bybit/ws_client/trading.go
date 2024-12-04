@@ -9,6 +9,7 @@ import (
 	"github.com/valyala/fastjson"
 	"github.com/lianyun0502/exchange_conn/v2/consts"
 	"github.com/lianyun0502/exchange_conn/v2/ws_client"
+	// ."github.com/lianyun0502/exchange_conn/v2/bybit/response"
 )
 func NewWsAPIClient(hostType string, apiKey, secretKey string, opts ...func(*WsBybitClient)) (*WsBybitClient, error) {
 	var exchInfo *wsClient.ExchangeApi
@@ -110,19 +111,6 @@ type Response struct {
 }
 
 
-// func Order(category, symbol, side, orderType, qty string, orderOpts...func(map[string]string)) map[string]string {
-// 	args := make(map[string]string)
-// 	args["category"] = category
-// 	args["symbol"] = symbol
-// 	args["side"] = side
-// 	args["orderType"] = orderType
-// 	args["qty"] = qty
-// 	for _, opt := range orderOpts {
-// 		opt(args)
-// 	}
-// 	return args
-// }
-
 /*
 是否借貸. 僅統一帳戶的現貨交易有效. 
 
@@ -155,21 +143,6 @@ func Price(price string) func(map[string]string) {
 		args["price"] = price
 	}
 }
-// /*
-// direction:
-
-// 	1: 當市場價上漲到了triggerPrice時觸發條件單
-// 	2: 當市場價下跌到了triggerPrice時觸發條件單
-
-// */
-// func Trigger(price, direction string) func(map[string]string) {
-// 	return func(args map[string]string) {
-// 		if (args["category"] != "linear") || (args["category"] != "inverse") {
-// 			return
-// 		}
-// 		args["triggerDirection"] = direction
-// 	}
-// }
 
 type CreateOrderResponse struct {
 	OrderID     string `json:"orderId,omitempty"`
