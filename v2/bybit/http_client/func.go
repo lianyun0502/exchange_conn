@@ -52,6 +52,7 @@ func (api *ByBitClient) MarginTrade_InterestRateHistory(currency string, opts ..
 	for _, opt := range opts {
 		opt(query)
 	}
+	req.SetQuery(query)
 	resp, err := req.Send()
 	if err != nil {
 		api.Log.Error(err)
