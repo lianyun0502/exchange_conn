@@ -76,7 +76,7 @@ func (wsc *WsBybitClient) Request(op string, header any, args any, timeOut time.
 		return
 	}
 	respCh := make(chan []byte, 2)
-	wsc.ReqMap[id] = respCh
+	wsc.ReqMap[op] = respCh
 	wsc.Logger.Debug("Send request")
 	wsc.Send(reqByte)
 	var resp []byte
