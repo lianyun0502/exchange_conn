@@ -39,3 +39,21 @@ func TestTrade_ExecutionList(t *testing.T) {
 	t.Log(common.PrettyPrint(resp))
 }
 
+
+func TestAccount_WalletBalance(t *testing.T) {
+	resp, err := api.Account_WalletBalance("UNIFIED")
+	if err != nil {
+		t.Error(resp)
+		return
+	}
+	t.Log(common.PrettyPrint(resp))
+}
+
+func TestPositionList(t *testing.T) {
+	resp, err := api.Position_List("linear", bybit.WithQuery(map[string]string{"settleCoin": "USDT"}))
+	if err != nil {
+		t.Error(resp)
+		return
+	}
+	t.Log(common.PrettyPrint(resp))
+}

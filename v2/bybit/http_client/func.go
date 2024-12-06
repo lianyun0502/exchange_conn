@@ -288,7 +288,7 @@ func (api *ByBitClient) Account_BorrowHistory(opts ...func(map[string]string)) (
 func (api *ByBitClient) Account_WalletBalance(accountType string, opts ...func(map[string]string)) (*WalletResponse, error) {
 	req := api.Request(http.MethodGet, "/v5/account/wallet-balance", SetSercurityType(true, true))
 	query := httpClient.QueryMap{
-		"account_type": accountType,
+		"accountType": accountType,
 	}
 	for _, opt := range opts {
 		opt(query)
