@@ -37,6 +37,9 @@ func NewWsPrivateClient(apiKey, secretKey string, opts ...func(*WsBybitClient)) 
 	}
 	client.PingMessage = `{"op":"ping"}`
 	client.Ping = client.PingServer
+	for _, opt := range opts {
+		opt(client)
+	}
 	return client, nil
 }
 

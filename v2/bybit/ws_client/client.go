@@ -151,9 +151,11 @@ func WithWsHandle(qouteHandler func(message []byte)) func(*WsBybitClient) {
 					return
 				}
 			}
-			if op := string(v.GetStringBytes("op")); op == "pong" {
-				client.ReqMap["pong"] <- rawData
-				return
+			if op := string(v.GetStringBytes("op")); op != "" {
+				if ch, ok := client.ReqMap[op] ; ok {
+					ch <- rawData
+					return
+				}
 			}
 			if qouteHandler != nil {
 				// if client.IsSubscribed {
