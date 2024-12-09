@@ -213,6 +213,34 @@ func (api *ByBitClient) Market_PremiumIndexPrice(symbol, interval string, opts .
 	}
 	return ret.Results, nil
 }
+// https://bybit-exchange.github.io/docs/zh-TW/v5/market/history-fund-rate
+func (api *ByBitClient)Market_FundingHistory(category, symbol string, opts ...func(map[string]string)) (*FundingHistoryResponse, error) {
+	req := api.Request(http.MethodGet, "/v5/market/funding/history")
+	query := httpClient.QueryMap{
+		"category": category,
+		"symbol":   symbol,
+	}
+	for _, opt := range opts {
+		opt(query)
+	}
+	req.SetQuery(query)
+	resp, err := req.Send()
+	if err != nil {
+		api.Log.Error(err)
+		return nil, err
+	}
+	ret := new(Response[*FundingHistoryResponse])
+	json.Unmarshal(resp, ret)
+	if ret.RetCode != 0 {
+		api.Log.WithFields(logrus.Fields{
+			"retCode": ret.RetCode,
+			"retMsg":  ret.RetMsg,
+		}).Warning("Market_FundingHistory")
+		return nil, errors.New(ret.RetMsg)
+	}
+	return ret.Results, nil
+}
+
 // https://bybit-exchange.github.io/docs/zh-TW/v5/market/risk-limit
 func (api *ByBitClient) Market_RiskLimit(category string, opts ...func(map[string]string)) ([]RiskLimit, error) {
 	req := api.Request(http.MethodGet, "/v5/market/risk-limit", SetSercurityType(true, true))

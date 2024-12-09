@@ -57,3 +57,22 @@ func TestPositionList(t *testing.T) {
 	}
 	t.Log(common.PrettyPrint(resp))
 }
+
+
+func TestMarket_RiskLimit(t *testing.T) {
+	resp, err := api.Market_RiskLimit("linear", bybit.WithQuery(map[string]string{"symbol": "BTCUSDT"}))
+	if err != nil {
+		t.Error(resp)
+		return
+	}
+	t.Log(common.PrettyPrint(resp))
+}
+
+func TestMarket_FundingHistory(t *testing.T) {
+	resp, err := api.Market_FundingHistory("linear", "BTCUSDT")
+	if err != nil {
+		t.Error(resp)
+		return
+	}
+	t.Log(common.PrettyPrint(resp))
+}

@@ -254,3 +254,15 @@ type Order struct {
 	CreateTime   string `json:"createdTime"`
 	UpdateTime   string `json:"updatedTime"`
 }
+
+type FundingHistoryResponse struct {
+	Category       string           `json:"category"`
+	Histories	  []*FundingHistory `json:"list"`
+}
+
+type FundingHistory struct {
+	Symbol	   string `json:"symbol"`
+	Time       string `json:"fundingRateTimestamp"`
+	FundingRate string `json:"fundingRate"`
+}
+
