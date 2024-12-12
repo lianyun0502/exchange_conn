@@ -48,6 +48,27 @@ func (wsc *WsBybitClient) Subscribe(topics []string) (respData []byte, err error
 	return resp, err
 }
 
+func (wsc *WsBybitClient) Unsubscribe(topics []string) (respData []byte, err error) {
+	id := common.GetUUID()
+	jTopics, _ := json.Marshal(topics)
+	msg := fmt.Sprintf(`{"req_id":"%s","op":"unsubscribe","args":%s}`, id, string(jTopics))
+	respCh := make(chan []byte, 2)
+	wsc.ReqMap[id] = respCh
+	err = wsc.Send([]byte(msg))
+	var resp []byte
+	select {
+	case <-time.After(5 * time.Second):
+		wsc.Logger.Warning("Unsubscribe Request timeout")
+		err = errors.New("Request timeout")
+		close(respCh)
+	case resp = <-respCh:
+		wsc.Logger.Debugf(`Response: %s`, string(resp))
+		wsc.IsSubscribed = true
+	}
+	delete(wsc.ReqMap, id)
+	return resp, err
+}
+
 func (wsc *WsBybitClient) Auth(timeOut time.Duration) (respData []byte, err error) {
 	expires := time.Now().Unix()*1000 + 10000
 	param := []string{
