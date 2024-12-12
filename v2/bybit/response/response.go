@@ -206,7 +206,7 @@ type Ticker struct {
 	Symbol string `json:"symbol"`
 	FR     string `json:"fundingRate"`
 	Volume24h string `json:"volume24h"`
-	Turnover24h string `json:" turnover24h"`
+	Turnover24h string `json:"turnover24h"`
 }
 
 type TickerResponse struct {
