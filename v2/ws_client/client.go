@@ -39,6 +39,9 @@ type WsClient struct {
 	PingMessage string
 	Ping        func([]byte) error
 	PTimeout    int
+
+	PreStartFunc func()
+	PostStartFunc func()
 }
 
 func (wsc *WsClient) OnOpen(socket *gws.Conn) {
@@ -70,6 +73,9 @@ func (wsc *WsClient) OnOpen(socket *gws.Conn) {
 	}()
 	// socket.WritePing([]byte(wsc.PingMessage))
 	go wsc.Ping([]byte(wsc.PingMessage))
+	if wsc.PostStartFunc != nil{
+		wsc.PostStartFunc()
+	}
 }
 func (wsc *WsClient) OnPing(socket *gws.Conn, message []byte) {
 	wsc.Logger.Info("OnPing")
@@ -78,10 +84,10 @@ func (wsc *WsClient) OnPing(socket *gws.Conn, message []byte) {
 }
 func (wsc *WsClient) OnPong(socket *gws.Conn, message []byte) {
 	wsc.Logger.Debugf("%s: OnPong", wsc.ExchangeInfo.HostType)
-	wsc.PingTimeout.Reset(10 * time.Second)
+	wsc.PingTimeout.Reset(time.Duration(wsc.PTimeout + 10) * time.Second)
 	wsc.Logger.Debug(string(message))
 	go func() {
-		time.Sleep(5 * time.Second)
+		time.Sleep(time.Duration(10) * time.Second)
 		wsc.Ping([]byte(wsc.PingMessage))
 	}()
 }
@@ -116,6 +122,9 @@ func (wsc *WsClient) OnClose(socket *gws.Conn, err error) {
 
 func (wsc *WsClient) StartLoop() {
 	wsc.StartSignal <- struct{}{}
+	if wsc.PreStartFunc != nil{
+		wsc.PreStartFunc()
+	}
 	wsc.Conn.ReadLoop()
 }
 
