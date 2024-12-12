@@ -10,11 +10,12 @@ import (
 var api = bybit.NewSpotClient(apiKey, secretKey, bybit.IsTestNet())
 
 func TestMarket_PremiumIndexPrice(t *testing.T) {
-	resp, err := api.Market_PremiumIndexPrice("WIFUSDT", "15")
+	resp, err := api.Market_PremiumIndexPrice("WIFUSDT", "1")
 	if err != nil {
 		t.Error(resp)
 		return
 	}
+	t.Log(common.PrettyPrint(resp))
 }
 
 func TestMarket_InstrumentInfo(t *testing.T) {

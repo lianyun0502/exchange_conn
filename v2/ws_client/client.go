@@ -52,13 +52,15 @@ func (wsc *WsClient) OnOpen(socket *gws.Conn) {
 		for {
 			select {
 			case <-wsc.PingTimeout.C:
-				wsc.Logger.Warningf("%s: Ping server timeout", wsc.ExchangeInfo.HostType)
+				wsc.Logger.Warningf("%s: Ping server timeout and stop loop", wsc.ExchangeInfo.HostType)
 				wsc.PingTimeout.Stop()
 				socket.NetConn().Close()
+				return
 			case <-wsc.msgTimout.C:
-				wsc.Logger.Warningf("%s: OnMessage timeout", wsc.ExchangeInfo.HostType)
+				wsc.Logger.Warningf("%s: OnMessage timeoutand stop loop", wsc.ExchangeInfo.HostType)
 				wsc.msgTimout.Stop()
 				socket.NetConn().Close()
+				return
 			case <-wsc.StopSignal:
 				wsc.Logger.Infof("%s: Stop loop", wsc.ExchangeInfo.HostType)
 				return
