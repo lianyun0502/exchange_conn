@@ -27,7 +27,7 @@ type WsClient struct {
 	PingTimeout *time.Timer
 
 	IsMsgTimeout bool
-	msgTimout   *time.Timer
+	msgTimout    *time.Timer
 
 	Ws_Handler func(message []byte)
 
@@ -37,13 +37,14 @@ type WsClient struct {
 	StartSignal chan struct{}
 
 	PingMessage string
-	Ping 	  func([]byte) error
+	Ping        func([]byte) error
+	PTimeout    int
 }
 
 func (wsc *WsClient) OnOpen(socket *gws.Conn) {
 	wsc.Logger.Infof("%s: OnOpen", wsc.ExchangeInfo.HostType)
 	wsc.StopSignal = make(chan struct{}, 1)
-	wsc.PingTimeout = time.NewTimer(3 * time.Second)
+	wsc.PingTimeout = time.NewTimer(time.Duration(wsc.PTimeout) * time.Second)
 	wsc.msgTimout = time.NewTimer(5 * time.Minute)
 	if !wsc.IsMsgTimeout {
 		wsc.msgTimout.Stop()
@@ -101,7 +102,7 @@ func (wsc *WsClient) OnClose(socket *gws.Conn, err error) {
 	if err != nil {
 		wsc.Logger.Error(err)
 	}
-	select{
+	select {
 	case _, ok := <-wsc.StopSignal:
 		if !ok {
 			return
@@ -110,8 +111,7 @@ func (wsc *WsClient) OnClose(socket *gws.Conn, err error) {
 		close(wsc.StopSignal)
 		wsc.Reconnect()
 	}
-	
-	
+
 }
 
 func (wsc *WsClient) StartLoop() {
@@ -202,6 +202,7 @@ func NewWsClient(exchangeInfo *ExchangeApi, wsHandler func(message []byte), clie
 		StartSignal:  make(chan struct{}, 5),
 		ReqMap:       make(map[string]chan []byte),
 		PingMessage:  "ping",
+		PTimeout:     5,
 	}
 	for _, opt := range clientOpts {
 		opt(client)
