@@ -77,3 +77,12 @@ func TestMarket_FundingHistory(t *testing.T) {
 	}
 	t.Log(common.PrettyPrint(resp))
 }
+
+func TestMarkert_Ticker(t *testing.T){
+	resp, err := api.Market_Tickers("linear")
+	if err != nil {
+		t.Error(resp)
+		return
+	}
+	t.Log(common.PrettyPrint(resp))
+}

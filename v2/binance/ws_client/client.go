@@ -44,6 +44,26 @@ func (wsc *WsBinanceClient) Subscribe(topics []string) (respData []byte, err err
 	return resp, err
 }
 
+func (wsc *WsBinanceClient) Unsubscribe(topics []string) (respData []byte, err error) {
+	id := common.GetUUID()
+	jTopics, _ := json.Marshal(topics)
+	msg := fmt.Sprintf(`{"id":"%s","method": "UNSUBSCRIBE","params":%s}`, id, string(jTopics))
+	respCh := make(chan []byte, 2)
+	wsc.ReqMap[id] = respCh
+	err = wsc.Send([]byte(msg))
+	var resp []byte
+	select {
+	case <-time.After(5 * time.Second):
+		wsc.Logger.Warning("Request timeout")
+		err = errors.New("Request timeout")
+		close(respCh)
+	case resp = <-respCh:
+		wsc.Logger.Debugf(`Response: %s`, string(resp))
+	}
+	delete(wsc.ReqMap, id)
+	return resp, err
+}
+
 func (wsc *WsBinanceClient) Auth() (respData []byte, err error) {
 	timeStamp := time.Now().UnixMilli()
 	body := fmt.Sprintf(`apiKey=%s&recvWindow=%s&timestamp=%d`,wsc.ExchangeInfo.APIKey, wsc.ReceiveWindow, timeStamp)
