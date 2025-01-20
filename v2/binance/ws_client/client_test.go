@@ -30,7 +30,7 @@ func TestBinanceWsQuote(t *testing.T) {
 	handle := func(data []byte) {
 		logger.Infof(`%s`, string(data))
 	}
-	client, _ := binance.NewWsQuoteClient(consts.Spot, handle, binance.IsTestNet())
+	client, _ := binance.NewWsQuoteClient(consts.Future, handle, binance.IsTestNet())
 	client.Logger = logger
 	client.Logger.SetLevel(logrus.DebugLevel)
 

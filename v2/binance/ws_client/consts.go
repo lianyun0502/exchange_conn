@@ -6,8 +6,8 @@ const (
 
 	SPOT_QUOTE_MAINNET = "wss://stream.binance.com:9443/ws"
 	SPOT_QUOTE_TESTNET = "wss://testnet.binance.vision/ws"
-	USD_QUOTE_MAINNET  = "wss://fstream.binance.com"
-	USD_QUOTE_TESTNET  = "wss://fstream.binancefuture.com"
+	USD_QUOTE_MAINNET  = "wss://fstream.binance.com/ws"
+	USD_QUOTE_TESTNET  = "wss://fstream.binancefuture.com/ws"
 	COIN_QUOTE_MAINNET = "wss://dstream.binance.com"
 	COIN_QUOTE_TESTNET = "wss://dstream.binancefuture.com"
 
