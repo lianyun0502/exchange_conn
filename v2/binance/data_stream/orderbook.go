@@ -213,6 +213,12 @@ func (ob* PartialOrderBook) Update(rawData []byte) (data *format.OrderBookStream
 	data.Topic = string(v.GetStringBytes("e"))
 	data.Time = v.GetInt64("E")
 	data.Symbol = string(v.GetStringBytes("s"))
+	if data.Bids == nil || data.Asks == nil {
+		return nil, errors.New("no data")
+	}
+	if len(data.Bids) <= 0 || len(data.Asks) <= 0 {
+		return nil, errors.New("data len is 0")
+	}
 	data.Bids = BestMap(data.Bids, -ob.BestDepth)
 	data.Asks = BestMap(data.Asks, ob.BestDepth)
 	return data, nil
