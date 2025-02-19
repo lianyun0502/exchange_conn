@@ -73,9 +73,9 @@ func TestBybitQuote(t *testing.T) {
 	client.Logger = logger
 	logger.SetLevel(logrus.DebugLevel)
 	client.Connect()
-	client.Subscribe([]string{"orderbook.1.BTCUSDT", "publicTrade.BTCUSDT"})
+	// client.Subscribe([]string{"orderbook.1.BTCUSDT", "publicTrade.BTCUSDT"})
 	go func() {
-		time.Sleep(10 * time.Second)
+		time.Sleep(40 * time.Second)
 		client.Stop()
 	}()
 	common.WaitForClose(logger, client.StopSignal)

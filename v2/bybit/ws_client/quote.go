@@ -66,7 +66,7 @@ func WithPublicPingfunction() func(client *WsBybitClient) {
 			// 	wsc.PingTimeout.Stop()
 			// 	wsc.Conn.NetConn().Close()
 			// 	// wsc.OnClose(wsc.Conn, err)
-			case respData := <-client.ReqMap["pong"]:
+			case respData := <-client.ReqMap["ping"]:
 				resp := fastjson.MustParseBytes(respData)
 				delete(client.ReqMap, "pong")
 				if retCode := resp.GetInt("retCode"); retCode != 0 {
