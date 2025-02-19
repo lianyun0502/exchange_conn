@@ -29,7 +29,7 @@ func NewWsAPIClient(hostType string, apiKey, secretKey string, opts ...func(*WsB
 		WsClient: wsClient.NewWsClient(exchInfo, nil), 
 		maxAliveTime: "",
 	}
-	opts = append(opts, WithWsHandle(nil))
+	opts = append(opts, WithWsHandle(nil), WithPublicPingfunction())
 	for _, opt := range opts {
 		opt(client)
 	}
@@ -44,7 +44,10 @@ func NewWsTradeClient(apiKey, secretKey string, opts ...func(*WsBybitClient)) (*
 		return nil, err
 	}
 	client.PingMessage = `{"op":"ping"}`
-	client.Ping = client.PingServer
+	opts = append(opts, WithWsHandle(nil), WithPrivatePingfunction())
+	for _, opt := range opts {
+		opt(client)
+	}
 	return client, nil
 }
 

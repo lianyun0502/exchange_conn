@@ -28,14 +28,16 @@ var logger = &logrus.Logger{
 func TestBybitWsApiOrder(t *testing.T) {
 	client, _ := bybit.NewWsTradeClient(apiKey, secretKey, bybit.IsTestNet())
 	client.Logger = logger
-	client.Connect()
-	go client.StartLoop()
-	resp, err := client.Auth(15)
-	if err != nil {
-		t.Log(string(resp))
-		t.Error(err)
-		return
+	client.PostStartFunc = func() error{
+		resp, err := client.Auth(15)
+		if err != nil {
+			t.Log(string(resp))
+			t.Error(err)
+			return err
+		}
+		return nil
 	}
+	client.Connect()
 
 	type ParamMap map[string]string
 	param := ParamMap{
@@ -71,26 +73,11 @@ func TestBybitQuote(t *testing.T) {
 	client.Logger = logger
 	logger.SetLevel(logrus.DebugLevel)
 	client.Connect()
-
-	go func() {
-		for range client.StartSignal {
-			resp, err := client.Subscribe([]string{"orderbook.1.BTCUSDT", "publicTrade.BTCUSDT"})
-			if err != nil {
-				t.Log(string(resp))
-				t.Error(err)
-				client.Stop()
-				return
-			}
-		}
-	}()
-
-	go client.StartLoop()
-
+	client.Subscribe([]string{"orderbook.1.BTCUSDT", "publicTrade.BTCUSDT"})
 	go func() {
 		time.Sleep(10 * time.Second)
 		client.Stop()
 	}()
-
 	common.WaitForClose(logger, client.StopSignal)
 }
 func BenchmarkBybitWsApiOrder(b *testing.B) {
@@ -98,7 +85,6 @@ func BenchmarkBybitWsApiOrder(b *testing.B) {
 	client.Logger = logger
 	// logger.SetLevel(logrus.ErrorLevel)
 	client.Connect()
-	go client.StartLoop()
 	client.Auth(15)
 	type ParamMap map[string]string
 	param := ParamMap{
@@ -125,21 +111,18 @@ func TestPrivateWsQuote(t *testing.T) {
 	client.Logger = logger
 	logger.SetLevel(logrus.DebugLevel)
 	client.Connect()
-
-	go func() {
-		for range client.StartSignal {
-			client.Auth(15)
-			resp, err := client.Subscribe([]string{"position"})
-			if err != nil {
-				t.Log(string(resp))
-				t.Error(err)
-				client.Stop()
-				return
-			}
-		}
-	}()
-
-	go client.StartLoop()
+	res, err := client.Auth(15)
+	if err != nil {
+		t.Log(string(res))
+		t.Error(err)
+		return
+	}
+	res, err = client.Subscribe([]string{"position"})
+	if err != nil {
+		t.Log(string(res))
+		t.Error(err)
+		return
+	}
 
 	go func() {
 		time.Sleep(20 * time.Second)

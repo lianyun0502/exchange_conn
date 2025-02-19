@@ -3,7 +3,7 @@ package wsClient
 import (
 	"net/http"
 	"time"
-
+	// "sync"
 	"github.com/lxzan/gws"
 	"github.com/sirupsen/logrus"
 )
@@ -20,6 +20,7 @@ type WsClient struct {
 	ClientOption *gws.ClientOption
 	Conn         *gws.Conn
 	ExchangeInfo *ExchangeApi
+	// mu            sync.Mutex
 
 	reconnTimes int
 
@@ -38,10 +39,11 @@ type WsClient struct {
 
 	PingMessage string
 	Ping        func([]byte) error
+	PingFunc    func() error
 	PTimeout    int
 
-	PreStartFunc func()
-	PostStartFunc func()
+	PreStartFunc func() error
+	PostStartFunc func() error
 }
 
 func (wsc *WsClient) OnOpen(socket *gws.Conn) {
@@ -72,10 +74,7 @@ func (wsc *WsClient) OnOpen(socket *gws.Conn) {
 		}
 	}()
 	// socket.WritePing([]byte(wsc.PingMessage))
-	go wsc.Ping([]byte(wsc.PingMessage))
-	if wsc.PostStartFunc != nil{
-		wsc.PostStartFunc()
-	}
+	go wsc.PingFunc() 
 }
 func (wsc *WsClient) OnPing(socket *gws.Conn, message []byte) {
 	wsc.Logger.Info("OnPing")
@@ -88,7 +87,7 @@ func (wsc *WsClient) OnPong(socket *gws.Conn, message []byte) {
 	wsc.Logger.Debug(string(message))
 	go func() {
 		time.Sleep(time.Duration(10) * time.Second)
-		wsc.Ping([]byte(wsc.PingMessage))
+		wsc.PingFunc()
 	}()
 }
 func (wsc *WsClient) OnMessage(socket *gws.Conn, message *gws.Message) {
@@ -109,23 +108,24 @@ func (wsc *WsClient) OnClose(socket *gws.Conn, err error) {
 		wsc.Logger.Error(err)
 	}
 	select {
-	case _, ok := <-wsc.StopSignal:
-		if !ok {
-			return
+		case _, ok := <-wsc.StopSignal:
+			if !ok {
+				wsc.Logger.Info("Stop signal closed")
+				return
+			}
+		default:
+			close(wsc.StopSignal)
+			wsc.Reconnect()
 		}
-	default:
-		close(wsc.StopSignal)
-		wsc.Reconnect()
-	}
 
 }
 
 func (wsc *WsClient) StartLoop() {
-	wsc.StartSignal <- struct{}{}
 	if wsc.PreStartFunc != nil{
 		wsc.PreStartFunc()
 	}
-	wsc.Conn.ReadLoop()
+	go wsc.Conn.ReadLoop()
+	wsc.StartSignal <- struct{}{}
 }
 
 func (wsc *WsClient) Stop() (err error) {
@@ -154,7 +154,7 @@ func (wsc *WsClient) Reconnect() {
 		for i := 0; ; i++ {
 			wsc.Logger.WithField("times", i+1).Info("Reconnect...")
 			if _, err := wsc.Connect(); err == nil {
-				go wsc.StartLoop()
+				// go wsc.StartLoop()
 				wsc.Logger.Info("Reconnection success")
 				return
 			}
@@ -162,9 +162,8 @@ func (wsc *WsClient) Reconnect() {
 	} else {
 		for i := 0; i < wsc.reconnTimes; i++ {
 			wsc.Logger.WithField("times", i+1).Info("Reconnect...")
-
 			if _, err := wsc.Connect(); err == nil {
-				go wsc.StartLoop()
+				// go wsc.StartLoop()
 				wsc.Logger.Info("Reconnection success")
 				return
 			}
@@ -175,36 +174,42 @@ func (wsc *WsClient) Reconnect() {
 }
 
 func (wsc *WsClient) Connect() (resp *http.Response, err error) {
+	// wsc.mu.Lock()
+    // defer wsc.mu.Unlock()
 	wsc.Logger.WithFields(logrus.Fields{
 		"exchange": wsc.ExchangeInfo.Name,
 		"hostType": wsc.ExchangeInfo.HostType,
 		"baseURL":  wsc.ExchangeInfo.BaseURL,
 	}).Info("Exchange Info")
-	wsc.ClientOption = &gws.ClientOption{
-		ReadBufferSize:   655350,
-		Addr:             wsc.ExchangeInfo.BaseURL,
-		HandshakeTimeout: 45 * time.Second,
-		PermessageDeflate: gws.PermessageDeflate{
-			Enabled:               true,
-			ServerContextTakeover: true,
-			ClientContextTakeover: true,
-		},
-		Logger: wsc.Logger,
-	}
-
 	wsc.Conn, resp, err = gws.NewClient(wsc, wsc.ClientOption)
 	if err != nil {
 		wsc.Logger.WithFields(logrus.Fields{"respone": resp}).Error(err)
+		return resp, err
 	}
-	if wsc.Ping == nil {
-		wsc.Ping = wsc.Conn.WritePing
+	wsc.StartLoop()
+
+	if wsc.PostStartFunc != nil{
+		if err = wsc.PostStartFunc(); err != nil {
+			wsc.Stop()
+			return resp, err
+		}
 	}
-	return resp, err
+	return resp, nil
 }
 
 func NewWsClient(exchangeInfo *ExchangeApi, wsHandler func(message []byte), clientOpts ...func(*WsClient)) *WsClient {
 	client := &WsClient{
 		ExchangeInfo: exchangeInfo,
+		ClientOption: &gws.ClientOption{
+			ReadBufferSize:   655350,
+			Addr:             exchangeInfo.BaseURL,
+			HandshakeTimeout: 45 * time.Second,
+			PermessageDeflate: gws.PermessageDeflate{
+				Enabled:               true,
+				ServerContextTakeover: true,
+				ClientContextTakeover: true,
+			},
+		},
 		reconnTimes:  -1,
 		Logger:       logrus.New(),
 		Ws_Handler:   wsHandler,
@@ -213,8 +218,17 @@ func NewWsClient(exchangeInfo *ExchangeApi, wsHandler func(message []byte), clie
 		PingMessage:  "ping",
 		PTimeout:     5,
 	}
+
+	client.ClientOption.Logger = client.Logger
+
 	for _, opt := range clientOpts {
 		opt(client)
+	}
+
+	if client.PingFunc == nil {
+		client.PingFunc = func () error {
+			return client.Conn.WritePing([]byte(client.PingMessage))
+		}
 	}
 	return client
 }
