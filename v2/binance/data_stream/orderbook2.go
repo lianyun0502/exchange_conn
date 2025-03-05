@@ -77,6 +77,7 @@ func NewOrderBookMap() (*OrderBooks, error){
 type OBObject struct{
 	ob *OrderBook
 	EvQueue *xsync.SPSCQueueOf[*DepthUpdate]
+	LastId int64
 }
 
 func NewOBObject() *OBObject {
@@ -108,7 +109,7 @@ func (obs *OrderBooks) Update(rawData []byte, opts... func(*OrderBooks)) (data *
 		go func () {
 			for {
 				if obs.Init(depthUpdate.Symbol) {
-					fmt.Println("init success")
+					// fmt.Println("init success")
 					break
 				}
 			}
@@ -126,6 +127,12 @@ func (obs *OrderBooks) Update(rawData []byte, opts... func(*OrderBooks)) (data *
 			break
 		}else{
 			depthUpdate = depth
+			if depthUpdate.FirstId - ob.ob.Depth.LastUpdateId > 10 {
+				fmt.Println("depthUpdate.FirstId - depth.LastUpdateId > 10")
+				obs.Delete(depthUpdate.Symbol)
+				return nil, fmt.Errorf("depthUpdate.FirstId - depth.LastUpdateId > 10")
+			}
+			ob.ob.Depth.LastUpdateId = depthUpdate.LastId
 		}
 		
 		for _, bid := range depthUpdate.Bids {
@@ -187,7 +194,7 @@ func (obs *OrderBooks) Update(rawData []byte, opts... func(*OrderBooks)) (data *
 		ob.ob.Depth.Asks = ob.ob.Depth.Asks[:10]
 	}
 	// fmt.Println("update success")
-	fmt.Println(depthUpdate.EventTime)
+	// fmt.Println(depthUpdate.EventTime)
 	ret := &format.OrderBookStream{
 		Bids: make(map[string]string),
 		Asks: make(map[string]string),
@@ -225,17 +232,18 @@ func (obs *OrderBooks) Init(symbol string) bool {
 		print(err)
 		return false
 	}
-	fmt.Println(d.LastUpdateId)
+	// fmt.Println(d.LastUpdateId)
 	for {
 		depthUpdate, ok := obj.EvQueue.TryDequeue()
-		fmt.Println(ok)
+		// fmt.Println(ok)
 		if ok {
-			fmt.Printf("depthUpdate.FirstId: %d, depthUpdate.LastId: %d,  d.LastUpdateId: %d\n", depthUpdate.FirstId, depthUpdate.LastId, d.LastUpdateId)
+			// fmt.Printf("depthUpdate.FirstId: %d, depthUpdate.LastId: %d,  d.LastUpdateId: %d\n", depthUpdate.FirstId, depthUpdate.LastId, d.LastUpdateId)
 			if d.LastUpdateId <= depthUpdate.FirstId {
 				return false
 			}
 			if d.LastUpdateId <= depthUpdate.LastId {
 				obj.ob = NewOrderBook(d, symbol)
+				obj.LastId = depthUpdate.LastId
 				return true
 			}
 		}else{
