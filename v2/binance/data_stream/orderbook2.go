@@ -10,7 +10,6 @@ import (
 
 	http_client "github.com/lianyun0502/exchange_conn/v2/binance/http_client"
 	"github.com/lianyun0502/exchange_conn/v2/data_format"
-
 	"github.com/puzpuzpuz/xsync/v3"
 )
 
@@ -62,8 +61,8 @@ type OrderBooks struct {
 
 
 
-func NewOrderBookMap() (*OrderBooks, error){
-	api, err := http_client.NewAPISpotClient("", "")
+func NewOrderBookMap(host_type string) (*OrderBooks, error){
+	api, err := http_client.NewAPIClient(host_type, "", "")
 	if err != nil {
 		return nil , err
 	}

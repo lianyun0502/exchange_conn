@@ -30,6 +30,14 @@ func NewAPIClient(hostType string, apiKey, secretKey string, opts ...func(*Binan
 			SecretKey: secretKey,
 			BaseURL:   SPOT_MAINNET,
 		}
+	case consts.Future:
+		exchInfo = &httpClient.ExchangeApi{
+			Name:      string(consts.Binance),
+			HostType:  consts.Future,
+			APIKey:    apiKey,
+			SecretKey: secretKey,
+			BaseURL:   UFUTURE_MAINNET,
+		}
 	default:
 		return nil, fmt.Errorf("hostType %s not supported", hostType)
 	}
@@ -49,6 +57,10 @@ func NewAPIClient(hostType string, apiKey, secretKey string, opts ...func(*Binan
 
 func NewAPISpotClient(apiKey, secretKey string, opts ...func(*BinanceClient)) (*BinanceClient, error) {
 	return NewAPIClient(consts.Spot, apiKey, secretKey, opts...)
+}
+
+func NewAPIFutureClient(apiKey, secretKey string, opts ...func(*BinanceClient)) (*BinanceClient, error) {
+	return NewAPIClient(consts.Future, apiKey, secretKey, opts...)
 }
 
 func IsTestNet() func(*BinanceClient) {

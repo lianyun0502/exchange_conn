@@ -208,7 +208,7 @@ func TestSort(t *testing.T)	{
 func TestOrderBookUpdateRealtime(t *testing.T) {
 	logger := logrus.New()
 
-	updater, _ := data_stream.NewOrderBookMap()
+	updater, _ := data_stream.NewOrderBookMap("spot")
 	handle := func(data []byte) {
 		// logger.Infof(`%s`, string(data))
 		ob, err := updater.Update(data)
