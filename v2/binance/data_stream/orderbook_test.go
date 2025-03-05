@@ -3,14 +3,22 @@ package data_stream_test
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/valyala/fastjson"
 
 	// "github.com/stretchr/testify/assert"
-	"github.com/lianyun0502/exchange_conn/v2/data_format"
+	ws "github.com/lianyun0502/exchange_conn/v2/binance/ws_client"
+	// "github.com/lianyun0502/exchange_conn/v2/common"
+	"github.com/lianyun0502/exchange_conn/v2/consts"
 	"github.com/lianyun0502/exchange_conn/v2/binance/data_stream"
+	"github.com/lianyun0502/exchange_conn/v2/data_format"
+	"github.com/sirupsen/logrus"
+	
 )
 
 func TestFastJson(t *testing.T) {
@@ -149,4 +157,94 @@ func TestOrderBookUpdate(t *testing.T) {
 	assert.Equal(t, parse.Asks["57266.71000000"], "0.00010000")
 	assert.Equal(t, parse.Asks["57279.41000000"], "0.43654000")
 
+}
+
+func TestSort(t *testing.T)	{
+	bids := [][]string{
+		{"57261.83000000","0.00096000"},
+		{"57265.01000000","5.23762000"},	
+		{"57261.66000000","0.00091000"},
+		{"57251.30000000","0.00000000"},
+		{"57249.66000000","0.04961000"},
+		{"57249.36000000","0.00000000"},
+		{"57248.79000000","0.00000000"},
+		{"57245.17000000","0.43654000"},
+		{"57197.85000000","8.11363000"},
+	}
+	sort.Slice(bids, func(i, j int) bool {
+		if price, _ := strconv.ParseFloat(bids[j][1], 64); price == 0 {
+			return true
+		}
+		return bids[i][0] > bids[j][0]
+	})
+	for _, bid := range bids[:5] {
+		fmt.Println(bid)
+	}
+
+	fmt.Println("==========")
+
+	asks := [][]string{
+		{"57265.03000000","0.03705000"},
+		{"57266.71000000","0.00010000"},
+		{"57279.41000000","0.43654000"},
+		{"57282.15000000","0.74283000"},
+		{"57282.45000000","0.00000000"},
+		{"57284.50000000","0.13960000"},
+		{"57291.80000000","0.00000000"},
+		{"57291.90000000","0.03024000"},
+	}
+	sort.Slice(asks, func(i, j int) bool {
+		if price, _ := strconv.ParseFloat(asks[j][1], 64); price == 0 {
+			return true
+		}
+		return asks[i][0] < asks[j][0]
+	})
+	for _, ask := range asks[:5] {
+		fmt.Println(ask)
+	}
+}
+
+
+func TestOrderBookUpdateRealtime(t *testing.T) {
+	logger := logrus.New()
+
+	updater, _ := data_stream.NewOrderBookMap()
+	handle := func(data []byte) {
+		// logger.Infof(`%s`, string(data))
+		ob, err := updater.Update(data)
+		if err != nil {
+			logger.Error(err)
+			return
+		}
+		if ob == nil {
+			return
+		}
+		logger.Infof("Bids: %v", ob.Bids)
+		logger.Infof("Asks: %v", ob.Asks)
+	}
+	client, _ := ws.NewWsQuoteClient(consts.Spot, handle)
+	client.Logger = logger
+	client.Logger.SetLevel(logrus.DebugLevel)
+
+	resp, err := client.Connect()
+	if err != nil {
+		logger.Println(resp)
+		t.Error(err)
+		return
+	}
+
+	go func() {
+		for range client.StartSignal {
+			client.Subscribe([]string{"btcusdt@depth@100ms"})
+		}
+	}()
+
+	client.StartLoop()
+
+
+	time.Sleep(30 * time.Second)
+	client.Stop()
+
+
+	<-client.StopSignal
 }

@@ -6,6 +6,7 @@ require (
 	github.com/duke-git/lancet/v2 v2.3.2
 	github.com/google/uuid v1.6.0
 	github.com/lxzan/gws v1.8.5
+	github.com/puzpuzpuz/xsync/v3 v3.5.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
 	github.com/valyala/fastjson v1.6.4
