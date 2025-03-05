@@ -213,7 +213,7 @@ func (obs *OrderBooks) Init(symbol string) bool {
 		print(err)
 		return false
 	}
-	time.Sleep(1 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
 	var d = new(Depth)
 	if err = json.Unmarshal(data, d); err != nil {
 		print(err)
