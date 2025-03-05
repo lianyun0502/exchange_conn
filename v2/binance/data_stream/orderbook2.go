@@ -211,7 +211,16 @@ func (obs *OrderBooks) Update(rawData []byte, opts... func(*OrderBooks)) (data *
 }
 
 func (obs *OrderBooks) Init(symbol string) bool {
-	req := obs.API.Request(http.MethodGet, "/api/v3/depth")
+	var endpoint string
+	switch obs.API.Exchange.HostType{
+	case "spot":
+		endpoint = "/api/v3/depth"
+	case "future":
+		endpoint = "/fapi/v1/depth"
+	default:
+		return false
+	}
+	req := obs.API.Request(http.MethodGet, endpoint)
 	query := map[string]string{"symbol": symbol, "limit": "10"}
 	req.SetQuery(query)
 	data, err := req.Send()
