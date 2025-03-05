@@ -208,7 +208,7 @@ func TestSort(t *testing.T)	{
 func TestOrderBookUpdateRealtime(t *testing.T) {
 	logger := logrus.New()
 
-	updater, _ := data_stream.NewOrderBookMap("spot")
+	updater, _ := data_stream.NewOrderBookMap("future")
 	handle := func(data []byte) {
 		// logger.Infof(`%s`, string(data))
 		ob, err := updater.Update(data)
@@ -222,7 +222,7 @@ func TestOrderBookUpdateRealtime(t *testing.T) {
 		logger.Infof("Bids: %v", ob.Bids)
 		logger.Infof("Asks: %v", ob.Asks)
 	}
-	client, _ := ws.NewWsQuoteClient(consts.Spot, handle)
+	client, _ := ws.NewWsQuoteClient(consts.Future, handle)
 	client.Logger = logger
 	client.Logger.SetLevel(logrus.DebugLevel)
 
@@ -235,7 +235,7 @@ func TestOrderBookUpdateRealtime(t *testing.T) {
 
 	go func() {
 		for range client.StartSignal {
-			client.Subscribe([]string{"btcusdt@depth@100ms"})
+			client.Subscribe([]string{"ethusdt@depth@100ms"})
 		}
 	}()
 

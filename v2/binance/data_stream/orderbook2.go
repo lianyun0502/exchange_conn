@@ -14,11 +14,12 @@ import (
 )
 
 type DepthUpdate struct {
-	EventType string `json:"e"`
-	EventTime int64  `json:"E"`
-	Symbol    string `json:"s"`
-	FirstId   int64  `json:"U"`
-	LastId    int64  `json:"u"`
+	EventType string     `json:"e"`
+	EventTime int64      `json:"E"`
+	Symbol    string     `json:"s"`
+	FirstId   int64      `json:"U"`
+	LastId    int64      `json:"u"`
+	PreID     int64      `json:"pu"`
 	Bids      [][]string `json:"b"`
 	Asks      [][]string `json:"a"`
 }
@@ -27,10 +28,10 @@ type Depth struct {
 	LastUpdateId int64 `json:"lastUpdateId"`
 	Symbol       string
 	Bids         [][]string `json:"bids"`
-	Asks 		[][]string `json:"asks"`
+	Asks         [][]string `json:"asks"`
 }
 
-type OrderBook struct{
+type OrderBook struct {
 	Depth *Depth
 	// PriceMap map[string][]string
 	PriceMap *xsync.MapOf[string, []string]
@@ -39,7 +40,7 @@ type OrderBook struct{
 func NewOrderBook(d *Depth, symbol string) *OrderBook {
 	d.Symbol = symbol
 	ob := &OrderBook{
-		Depth: d,
+		Depth:    d,
 		PriceMap: xsync.NewMapOf[string, []string](),
 	}
 	for _, bid := range d.Bids {
@@ -53,40 +54,52 @@ func NewOrderBook(d *Depth, symbol string) *OrderBook {
 	return ob
 }
 
-
 type OrderBooks struct {
 	API *http_client.BinanceClient
 	*xsync.MapOf[string, *OBObject]
 }
 
-
-
-func NewOrderBookMap(host_type string) (*OrderBooks, error){
+func NewOrderBookMap(host_type string) (*OrderBooks, error) {
 	api, err := http_client.NewAPIClient(host_type, "", "")
 	if err != nil {
-		return nil , err
+		return nil, err
 	}
 	ob := &OrderBooks{
-		API: api,
+		API:   api,
 		MapOf: xsync.NewMapOf[string, *OBObject](),
 	}
 	return ob, nil
 }
 
-type OBObject struct{
-	ob *OrderBook
+type OBObject struct {
+	ob      *OrderBook
 	EvQueue *xsync.SPSCQueueOf[*DepthUpdate]
-	LastId int64
+	LastId  int64
+	IsInit  bool
 }
 
 func NewOBObject() *OBObject {
 	return &OBObject{
-		ob: nil,
+		ob:      nil,
 		EvQueue: xsync.NewSPSCQueueOf[*DepthUpdate](100),
+		LastId:  0,
+		IsInit:  false,
 	}
 }
 
-func (obs *OrderBooks) Update(rawData []byte, opts... func(*OrderBooks)) (data *format.OrderBookStream, err error){
+func (obs *OrderBooks) IsFrameLose(depthUpdate *DepthUpdate, ob OBObject) bool{
+	switch obs.API.Exchange.HostType {
+	case "spot":
+		return depthUpdate.FirstId-ob.LastId > 20
+	case "future":
+		return depthUpdate.PreID != ob.LastId
+	default:
+		return false
+	}
+
+}
+
+func (obs *OrderBooks) Update(rawData []byte, opts ...func(*OrderBooks)) (data *format.OrderBookStream, err error) {
 	for _, opt := range opts {
 		opt(obs)
 	}
@@ -94,7 +107,7 @@ func (obs *OrderBooks) Update(rawData []byte, opts... func(*OrderBooks)) (data *
 	var depthUpdate = new(DepthUpdate)
 	json.Unmarshal(rawData, depthUpdate)
 	ob, ok := obs.Load(depthUpdate.Symbol)
-	if ok { 
+	if ok {
 		if ob.EvQueue.TryEnqueue(depthUpdate) {
 			// fmt.Println("load success")
 			// fmt.Println(depthUpdate)
@@ -105,10 +118,11 @@ func (obs *OrderBooks) Update(rawData []byte, opts... func(*OrderBooks)) (data *
 		if obj.EvQueue.TryEnqueue(depthUpdate) {
 			// fmt.Println("store success")
 		}
-		go func () {
+		go func() {
 			for {
 				if obs.Init(depthUpdate.Symbol) {
 					// fmt.Println("init success")
+					obj.IsInit = true
 					break
 				}
 			}
@@ -116,29 +130,28 @@ func (obs *OrderBooks) Update(rawData []byte, opts... func(*OrderBooks)) (data *
 		return nil, nil
 	}
 	if ob.ob == nil {
-		return nil , fmt.Errorf("orderbook is nil")
+		return nil, fmt.Errorf("orderbook is nil")
 	}
-	if ob.ob.Depth == nil {
-		return nil , fmt.Errorf("depth is nil")
+	if !ob.IsInit {
+		return nil, fmt.Errorf("orderbook is not init")
 	}
 	for {
 		if depth, ok := ob.EvQueue.TryDequeue(); !ok {
 			break
-		}else{
+		} else {
 			depthUpdate = depth
-			if depthUpdate.FirstId - ob.ob.Depth.LastUpdateId > 10 {
-				fmt.Println("depthUpdate.FirstId - depth.LastUpdateId > 10")
+			if obs.IsFrameLose(depthUpdate, *ob) {
 				obs.Delete(depthUpdate.Symbol)
-				return nil, fmt.Errorf("depthUpdate.FirstId - depth.LastUpdateId > 10")
+				return nil, fmt.Errorf("frame loss")
 			}
-			ob.ob.Depth.LastUpdateId = depthUpdate.LastId
+			ob.LastId = depthUpdate.LastId
 		}
-		
+
 		for _, bid := range depthUpdate.Bids {
 			if b, ok := ob.ob.PriceMap.Load(bid[0]); ok {
 				// fmt.Printf("b[1]: %s, bid[1]: %s\n", b[1], bid[1])
 				b[1] = bid[1]
-			}else{
+			} else {
 				ob.ob.Depth.Bids = append(ob.ob.Depth.Bids, bid)
 				ob.ob.PriceMap.Store(bid[0], bid)
 			}
@@ -169,7 +182,7 @@ func (obs *OrderBooks) Update(rawData []byte, opts... func(*OrderBooks)) (data *
 		for _, ask := range depthUpdate.Asks {
 			if a, ok := ob.ob.PriceMap.Load(ask[0]); ok {
 				a[1] = ask[1]
-			}else{
+			} else {
 				ob.ob.Depth.Asks = append(ob.ob.Depth.Asks, ask)
 				ob.ob.PriceMap.Store(ask[0], ask)
 			}
@@ -212,7 +225,7 @@ func (obs *OrderBooks) Update(rawData []byte, opts... func(*OrderBooks)) (data *
 
 func (obs *OrderBooks) Init(symbol string) bool {
 	var endpoint string
-	switch obs.API.Exchange.HostType{
+	switch obs.API.Exchange.HostType {
 	case "spot":
 		endpoint = "/api/v3/depth"
 	case "future":
@@ -245,7 +258,7 @@ func (obs *OrderBooks) Init(symbol string) bool {
 		depthUpdate, ok := obj.EvQueue.TryDequeue()
 		// fmt.Println(ok)
 		if ok {
-			// fmt.Printf("depthUpdate.FirstId: %d, depthUpdate.LastId: %d,  d.LastUpdateId: %d\n", depthUpdate.FirstId, depthUpdate.LastId, d.LastUpdateId)
+			fmt.Printf("depthUpdate.FirstId: %d, depthUpdate.LastId: %d,  d.LastUpdateId: %d\n", depthUpdate.FirstId, depthUpdate.LastId, d.LastUpdateId)
 			if d.LastUpdateId <= depthUpdate.FirstId {
 				return false
 			}
@@ -254,10 +267,10 @@ func (obs *OrderBooks) Init(symbol string) bool {
 				obj.LastId = depthUpdate.LastId
 				return true
 			}
-		}else{
+		} else {
 			break
 		}
-		
+
 	}
 	return false
 }
