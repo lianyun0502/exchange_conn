@@ -34,22 +34,24 @@ type Depth struct {
 type OrderBook struct {
 	Depth *Depth
 	// PriceMap map[string][]string
-	PriceMap *xsync.MapOf[string, []string]
+	bidPriceMap *xsync.MapOf[string, []string]
+	askPriceMap *xsync.MapOf[string, []string]
 }
 
 func NewOrderBook(d *Depth, symbol string) *OrderBook {
 	d.Symbol = symbol
 	ob := &OrderBook{
 		Depth:    d,
-		PriceMap: xsync.NewMapOf[string, []string](),
+		bidPriceMap: xsync.NewMapOf[string, []string](),
+		askPriceMap: xsync.NewMapOf[string, []string](),
 	}
 	for _, bid := range d.Bids {
 		// ob.PriceMap[bid[0]] = bid
-		ob.PriceMap.Store(bid[0], bid)
+		ob.bidPriceMap.Store(bid[0], bid)
 	}
 	for _, ask := range d.Asks {
 		// ob.PriceMap[ask[0]] = ask
-		ob.PriceMap.Store(ask[0], ask)
+		ob.askPriceMap.Store(ask[0], ask)
 	}
 	return ob
 }
@@ -148,43 +150,44 @@ func (obs *OrderBooks) Update(rawData []byte, opts ...func(*OrderBooks)) (data *
 		}
 
 		for _, bid := range depthUpdate.Bids {
-			if b, ok := ob.ob.PriceMap.Load(bid[0]); ok {
+			if b, ok := ob.ob.bidPriceMap.Load(bid[0]); ok {
 				// fmt.Printf("b[1]: %s, bid[1]: %s\n", b[1], bid[1])
 				b[1] = bid[1]
 			} else {
 				ob.ob.Depth.Bids = append(ob.ob.Depth.Bids, bid)
-				ob.ob.PriceMap.Store(bid[0], bid)
+				ob.ob.bidPriceMap.Store(bid[0], bid)
 			}
 
 		}
 		// fmt.Printf("ob.ob.Depth.Bids len : %d\n", len(ob.ob.Depth.Bids))
 		sort.Slice(ob.ob.Depth.Bids, func(i, j int) bool {
-			if qtyi, _ := strconv.ParseFloat(ob.ob.Depth.Bids[i][1], 64); qtyi == 0 {
-				return false
-			}
 			if qtyj, _ := strconv.ParseFloat(ob.ob.Depth.Bids[j][1], 64); qtyj == 0 {
 				return true
+			}
+			if qtyi, _ := strconv.ParseFloat(ob.ob.Depth.Bids[i][1], 64); qtyi == 0 {
+				// fmt.Printf("ob.ob.Depth.Bids[i][1]: %s\n", ob.ob.Depth.Bids[i][1])
+				return false
 			}
 			pricei, _ := strconv.ParseFloat(ob.ob.Depth.Bids[i][0], 64)
 			pricej, _ := strconv.ParseFloat(ob.ob.Depth.Bids[j][0], 64)
 			// fmt.Printf("ob.ob.Depth.Bids[i][0]: %d, ob.ob.Depth.Bids[j][0]: %d\n", i, j)
 			return pricei > pricej
 		})
-		// for i := 0; i < 10; i++ {
-		// 	fmt.Println(ob.ob.Depth.Bids[i])
-		// }
-		for _, bid := range ob.ob.Depth.Bids[10:] {
-			// delete(ob.ob.PriceMap, bid[0])
-			ob.ob.PriceMap.Delete(bid[0])
+		if len(ob.ob.Depth.Bids) > 100 {
+			for _, bid := range ob.ob.Depth.Bids[100:] {
+				// delete(ob.ob.PriceMap, bid[0])
+				ob.ob.bidPriceMap.Delete(bid[0])
+			}
+			ob.ob.Depth.Bids = ob.ob.Depth.Bids[:100]
 		}
-		ob.ob.Depth.Bids = ob.ob.Depth.Bids[:10]
+		
 
 		for _, ask := range depthUpdate.Asks {
-			if a, ok := ob.ob.PriceMap.Load(ask[0]); ok {
+			if a, ok := ob.ob.askPriceMap.Load(ask[0]); ok {
 				a[1] = ask[1]
 			} else {
 				ob.ob.Depth.Asks = append(ob.ob.Depth.Asks, ask)
-				ob.ob.PriceMap.Store(ask[0], ask)
+				ob.ob.askPriceMap.Store(ask[0], ask)
 			}
 		}
 		// fmt.Printf("ob.ob.Depth.Asks len: %d\n", len(ob.ob.Depth.Asks))
@@ -199,11 +202,13 @@ func (obs *OrderBooks) Update(rawData []byte, opts ...func(*OrderBooks)) (data *
 			pricej, _ := strconv.ParseFloat(ob.ob.Depth.Asks[j][0], 64)
 			return pricei < pricej
 		})
-		for _, ask := range ob.ob.Depth.Asks[10:] {
-			// delete(ob.ob.PriceMap, ask[0])
-			ob.ob.PriceMap.Delete(ask[0])
+		if len(ob.ob.Depth.Asks) > 100 {
+			for _, ask := range ob.ob.Depth.Asks[100:] {
+				// delete(ob.ob.PriceMap, ask[0])
+				ob.ob.askPriceMap.Delete(ask[0])
+			}
+			ob.ob.Depth.Asks = ob.ob.Depth.Asks[:100]
 		}
-		ob.ob.Depth.Asks = ob.ob.Depth.Asks[:10]
 	}
 	// fmt.Println("update success")
 	// fmt.Println(depthUpdate.EventTime)
@@ -211,10 +216,14 @@ func (obs *OrderBooks) Update(rawData []byte, opts ...func(*OrderBooks)) (data *
 		Bids: make(map[string]string),
 		Asks: make(map[string]string),
 	}
-	for _, bid := range ob.ob.Depth.Bids {
+	if ob.ob.Depth.Bids[0][1] == "0.000" {
+		fmt.Println(depthUpdate)
+		fmt.Println(ob.ob.Depth.Bids[0])
+	}
+	for _, bid := range ob.ob.Depth.Bids[:10] {
 		ret.Bids[bid[0]] = bid[1]
 	}
-	for _, ask := range ob.ob.Depth.Asks {
+	for _, ask := range ob.ob.Depth.Asks[:10] {
 		ret.Asks[ask[0]] = ask[1]
 	}
 	ret.Symbol = ob.ob.Depth.Symbol
