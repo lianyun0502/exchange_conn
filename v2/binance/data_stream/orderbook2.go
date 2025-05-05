@@ -92,7 +92,7 @@ func NewOBObject() *OBObject {
 func (obs *OrderBooks) IsFrameLose(depthUpdate *DepthUpdate, ob OBObject) bool{
 	switch obs.API.Exchange.HostType {
 	case "spot":
-		return depthUpdate.FirstId-ob.LastId > 20
+		return depthUpdate.FirstId-ob.LastId > 20 
 	case "future":
 		return depthUpdate.PreID != ob.LastId
 	default:
@@ -132,7 +132,8 @@ func (obs *OrderBooks) Update(rawData []byte, opts ...func(*OrderBooks)) (data *
 		return nil, nil
 	}
 	if ob.ob == nil {
-		return nil, fmt.Errorf("orderbook is nil")
+		obs.Delete(depthUpdate.Symbol)
+		return nil, fmt.Errorf("%s orderbook is nil", depthUpdate.Symbol)
 	}
 	if !ob.IsInit {
 		return nil, fmt.Errorf("orderbook is not init")
