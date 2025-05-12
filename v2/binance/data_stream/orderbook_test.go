@@ -269,7 +269,7 @@ func TestOrderBookUpdateRealtime(t *testing.T) {
 	// client.StartLoop()
 
 
-	time.Sleep(30 * time.Second)
+	time.Sleep(10 * time.Second)
 	client.Stop()
 
 

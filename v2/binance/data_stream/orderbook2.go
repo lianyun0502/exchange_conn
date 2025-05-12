@@ -134,6 +134,8 @@ func (ob *OrderBook) ComposeDepth(api *http_client.BinanceClient) bool{
 type OrderBookManager struct {
 	API *http_client.BinanceClient
 	*xsync.MapOf[string, *OrderBook] // map[coin]* OB
+
+	InitQueue chan *OrderBook
 }
 
 func NewOrderBookManager(host_type string) (*OrderBookManager, error) {
@@ -144,7 +146,9 @@ func NewOrderBookManager(host_type string) (*OrderBookManager, error) {
 	ob := &OrderBookManager{
 		API:   api,
 		MapOf: xsync.NewMapOf[string, *OrderBook](),
+		InitQueue: make(chan *OrderBook, 100),
 	}
+	go ob.StartInitQueue()
 	return ob, nil
 }
 
@@ -172,14 +176,10 @@ func (obs *OrderBookManager) Update(rawData []byte, opts ...func(*OrderBookManag
 		if orderBook.DataQueue.TryEnqueue(depthUpdate) {
 			// fmt.Println("store success")
 		}
-		go func() {
-			for {
-				if orderBook.ComposeDepth(obs.API) {
-					obs.Store(depthUpdate.Symbol, orderBook)
-					break
-				}
-			}
-		}()
+		fmt.Printf("store new orderbook %s\n", depthUpdate.Symbol)
+		obs.Store(depthUpdate.Symbol, orderBook)
+		obs.InitQueue <- orderBook
+
 		return nil, nil
 	}
 	if orderBook == nil {
@@ -285,54 +285,15 @@ func (obs *OrderBookManager) Update(rawData []byte, opts ...func(*OrderBookManag
 	return ret, nil
 }
 
-func (obs *OrderBookManager) Init(symbol string) bool {
-	var endpoint string
-	switch obs.API.Exchange.HostType {
-	case "spot":
-		endpoint = "/api/v3/depth"
-	case "future":
-		endpoint = "/fapi/v1/depth"
-	default:
-		return false
-	}
-	req := obs.API.Request(http.MethodGet, endpoint)
-	query := map[string]string{"symbol": symbol, "limit": "10"}
-	req.SetQuery(query)
-	data, err := req.Send()
-	if err != nil {
-		print(err)
-		return false
-	}
-	time.Sleep(50 * time.Millisecond)
-	var d = new(SnapshotDepth)
-	if err = json.Unmarshal(data, d); err != nil {
-		print(err)
-		return false
-	}
-	d.Symbol = symbol
-	orderBook, ok := obs.Load(symbol)
-	if !ok {
-		print(err)
-		return false
-	}
-	// fmt.Println(d.LastUpdateId)
-	for {
-		depthUpdate, ok := orderBook.DataQueue.TryDequeue()
-		// fmt.Println(ok)
-		if ok {
-			fmt.Printf("depthUpdate.FirstId: %d, depthUpdate.LastId: %d,  d.LastUpdateId: %d\n", depthUpdate.FirstId, depthUpdate.LastId, d.LastUpdateId)
-			if d.LastUpdateId <= depthUpdate.FirstId {
-				return false
-			}
-			if d.LastUpdateId <= depthUpdate.LastId {
-				orderBook.UpdateSnapshot(*d)
-				orderBook.LastId = depthUpdate.LastId
-				return true
-			}
-		} else {
-			break
+func (obs *OrderBookManager) StartInitQueue() {
+	for orderbook := range obs.InitQueue {
+		if orderbook.IsInit {
+			continue
 		}
-
+		if !orderbook.ComposeDepth(obs.API) {
+			fmt.Println("compose depth fail")
+			obs.Delete(orderbook.Symbol)
+		}
 	}
-	return false
+
 }
