@@ -206,9 +206,9 @@ func TestSort(t *testing.T)	{
 
 
 func TestOrderBookUpdateRealtime(t *testing.T) {
-	logger := logrus.New()
 
-	updater, _ := data_stream.NewOrderBookMap("future")
+	logger := logrus.New()
+	updater, _ := data_stream.NewOrderBookManager("future")
 	handle := func(data []byte) {
 		// logger.Infof(`%s`, string(data))
 		ob, err := updater.Update(data)
@@ -225,7 +225,35 @@ func TestOrderBookUpdateRealtime(t *testing.T) {
 	client, _ := ws.NewWsQuoteClient(consts.Future, handle)
 	client.Logger = logger
 	client.Logger.SetLevel(logrus.DebugLevel)
+	client.PostStartFunc = func() error{
+		_, err := client.Subscribe([]string{
+			"ethusdt@depth@100ms", 
+			"btcusdt@depth5@100ms",
+			"adausdt@depth5@100ms",
+			"xrpusdt@depth5@100ms",
+			"ltcusdt@depth5@100ms",
+			"dogeusdt@depth5@100ms",
+			"trbusdt@depth5@100ms",
+			"dotusdt@depth5@100ms",
+			"solusdt@depth5@100ms",
+			"shibusdt@depth5@100ms",
+			"mkrusdt@depth5@100ms",
+			"linkusdt@depth5@100ms",
+			"uniusdt@depth5@100ms",
+			"avaxusdt@depth5@100ms",
+			"filusdt@depth5@100ms",
+			"lunausdt@depth5@100ms",
+			"etcusdt@depth5@100ms",
+			"bchusdt@depth5@100ms",
+		})
 
+		if err != nil {
+			logger.Error(err)
+			return err
+		}
+
+		return nil
+	}
 	resp, err := client.Connect()
 	if err != nil {
 		logger.Println(resp)
@@ -233,13 +261,13 @@ func TestOrderBookUpdateRealtime(t *testing.T) {
 		return
 	}
 
-	go func() {
-		for range client.StartSignal {
-			client.Subscribe([]string{"ethusdt@depth@100ms"})
-		}
-	}()
+	// go func() {
+	// 	for range client.StartSignal {
+	// 		client.Subscribe([]string{"ethusdt@depth@100ms"})
+	// 	}
+	// }()
 
-	client.StartLoop()
+	// client.StartLoop()
 
 
 	time.Sleep(30 * time.Second)

@@ -47,7 +47,7 @@ func TestBinanceWsQuote(t *testing.T) {
 		}
 	}()
 
-	go client.StartLoop()
+	// go client.StartLoop()
 
 
 	time.Sleep(10 * time.Second)
@@ -66,7 +66,7 @@ func TestBinanceWsOrder(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	go client.StartLoop()
+	// go client.StartLoop()
 
 	go func() {
 		<-client.StartSignal
@@ -144,7 +144,7 @@ func TestBinanceWsOrderbook(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	go client.StartLoop()
+	// go client.StartLoop()
 
 	go func() {
 		<-client.StartSignal
