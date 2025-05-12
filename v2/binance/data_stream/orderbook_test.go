@@ -206,7 +206,6 @@ func TestSort(t *testing.T)	{
 
 
 func TestOrderBookUpdateRealtime(t *testing.T) {
-
 	logger := logrus.New()
 	updater, _ := data_stream.NewOrderBookManager("future")
 	handle := func(data []byte) {

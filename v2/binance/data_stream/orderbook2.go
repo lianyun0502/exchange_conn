@@ -95,7 +95,7 @@ func (ob *OrderBook) ComposeDepth(api *http_client.BinanceClient) bool{
 		return false
 	}
 	req := api.Request(http.MethodGet, endpoint)
-	query := map[string]string{"symbol": ob.Depth.Symbol, "limit": "10"}
+	query := map[string]string{"symbol": ob.Symbol, "limit": "10"}
 	req.SetQuery(query)
 	data, err := req.Send()
 	if err != nil {
@@ -119,6 +119,7 @@ func (ob *OrderBook) ComposeDepth(api *http_client.BinanceClient) bool{
 			if d.LastUpdateId <= depthUpdate.LastId {
 				ob.UpdateSnapshot(*d)
 				ob.LastId = depthUpdate.LastId
+				ob.IsInit = true
 				return true
 			}
 		} else {
@@ -168,15 +169,13 @@ func (obs *OrderBookManager) Update(rawData []byte, opts ...func(*OrderBookManag
 		}
 	} else {
 		orderBook := NewOrderBook(depthUpdate.Symbol)
-		obs.Store(depthUpdate.Symbol, orderBook)
 		if orderBook.DataQueue.TryEnqueue(depthUpdate) {
 			// fmt.Println("store success")
 		}
 		go func() {
 			for {
-				if obs.Init(depthUpdate.Symbol) {
-					// fmt.Println("init success")
-					orderBook.IsInit = true
+				if orderBook.ComposeDepth(obs.API) {
+					obs.Store(depthUpdate.Symbol, orderBook)
 					break
 				}
 			}
