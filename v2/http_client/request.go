@@ -1,11 +1,13 @@
 package httpClient
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -43,6 +45,25 @@ func (r *Request) Send() ([]byte, error) {
 		return nil, err
 	}
 	return r.send(req)
+}
+
+func (r *Request) SendWithTimeout(timeout int) (resp []byte, err error) {
+	_, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+	defer cancel()
+	errCh := make(chan error, 1)
+	go func() {
+		resp, err = r.Send()
+		errCh <- err
+	}()
+	select {
+	case <-time.After(time.Duration(timeout) * time.Second):
+		return nil, fmt.Errorf("request timeout")
+	case err := <-errCh:
+		if err != nil {
+			return nil, err
+		}
+		return resp, nil
+	}
 }
 
 func (r *Request) SetParam(param ParamMap) *Request {
