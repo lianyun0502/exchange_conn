@@ -188,7 +188,7 @@ func (obs *OrderBookManager) Update(rawData []byte, opts ...func(*OrderBookManag
 	}
 
 	if !orderBook.IsInit {
-		return nil, fmt.Errorf("orderbook is not init")
+		return nil, fmt.Errorf("%s orderbook is not init", depthUpdate.Symbol)
 	}
 
 	for {
@@ -198,7 +198,7 @@ func (obs *OrderBookManager) Update(rawData []byte, opts ...func(*OrderBookManag
 			depthUpdate = depth
 			if obs.IsFrameLose(depthUpdate, orderBook) {
 				obs.Delete(depthUpdate.Symbol)
-				return nil, fmt.Errorf("frame loss")
+				return nil, fmt.Errorf("%s frame loss", depthUpdate.Symbol)
 			}
 			orderBook.LastId = depthUpdate.LastId
 		}
