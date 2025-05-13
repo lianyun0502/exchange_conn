@@ -36,6 +36,7 @@ type SnapshotDepth struct {
 
 // OB組合物件
 type OrderBook struct {
+	API *http_client.BinanceClient
 	Depth *SnapshotDepth
 	Symbol string
 	bidPriceMap *xsync.MapOf[string, []string]
@@ -47,15 +48,20 @@ type OrderBook struct {
 	IsInit  bool
 }
 
-func NewOrderBook(symbol string) *OrderBook {
+func NewOrderBook(symbol string, host_type string) (*OrderBook, error) {
+	api, err := http_client.NewAPIClient(host_type, "", "")
+	if err != nil {
+		return nil, err
+	}
 	return &OrderBook{
+		API: api,
 		Symbol: symbol,
 		DataQueue: xsync.NewSPSCQueueOf[*UpdateDepth](100),
 		LastId:  0,
 		IsInit:  false,
 		bidPriceMap: xsync.NewMapOf[string, []string](),
 		askPriceMap: xsync.NewMapOf[string, []string](),
-	}
+	}, nil
 }
 
 func (ob *OrderBook) UpdateSnapshot(snapshot SnapshotDepth) *OrderBook {
@@ -85,9 +91,9 @@ func (ob *OrderBook) IsFrameLose(depthUpdate *UpdateDepth, hostType string) bool
 
 }
 
-func (ob *OrderBook) ComposeDepth(api *http_client.BinanceClient) (bool, error) {
+func (ob *OrderBook) ComposeDepth() (bool, error) {
 	var endpoint string
-	switch api.Exchange.HostType {
+	switch ob.API.Exchange.HostType {
 	case "spot":
 		endpoint = "/api/v3/depth"
 	case "future":
@@ -95,14 +101,13 @@ func (ob *OrderBook) ComposeDepth(api *http_client.BinanceClient) (bool, error) 
 	default:
 		return false , fmt.Errorf("host type error")	
 	}
-	req := api.Request(http.MethodGet, endpoint)
+	req := ob.API.Request(http.MethodGet, endpoint)
 	query := map[string]string{"symbol": ob.Symbol, "limit": "10"}
 	req.SetQuery(query)
 	data, err := req.SendWithTimeout(5)
 	if err != nil {
 		return false, err
 	}
-	time.Sleep(50 * time.Millisecond)
 	var d = new(SnapshotDepth)
 	if err = json.Unmarshal(data, d); err != nil {
 		return false, err
@@ -111,7 +116,7 @@ func (ob *OrderBook) ComposeDepth(api *http_client.BinanceClient) (bool, error) 
 		depthUpdate, ok := ob.DataQueue.TryDequeue()
 		// fmt.Println(ok)
 		if ok {
-			fmt.Printf("depthUpdate.FirstId: %d, depthUpdate.LastId: %d,  d.LastUpdateId: %d\n", depthUpdate.FirstId, depthUpdate.LastId, d.LastUpdateId)
+			ob.API.Log.Debugf("depthUpdate.FirstId: %d, depthUpdate.LastId: %d,  d.LastUpdateId: %d\n", depthUpdate.FirstId, depthUpdate.LastId, d.LastUpdateId)
 			if d.LastUpdateId <= depthUpdate.FirstId {
 				return false, fmt.Errorf("out of orderbook frame")
 			}
@@ -131,19 +136,19 @@ func (ob *OrderBook) ComposeDepth(api *http_client.BinanceClient) (bool, error) 
 }
 
 type OrderBookManager struct {
-	API *http_client.BinanceClient
+	Host_type string
 	*xsync.MapOf[string, *OrderBook] // map[coin]* OB
 
 	InitQueue chan *OrderBook
 }
 
 func NewOrderBookManager(host_type string) (*OrderBookManager, error) {
-	api, err := http_client.NewAPIClient(host_type, "", "")
-	if err != nil {
-		return nil, err
-	}
+	// api, err := http_client.NewAPIClient(host_type, "", "")
+	// if err != nil {
+	// 	return nil, err
+	// }
 	ob := &OrderBookManager{
-		API:   api,
+		Host_type: host_type,
 		MapOf: xsync.NewMapOf[string, *OrderBook](),
 		InitQueue: make(chan *OrderBook, 100),
 	}
@@ -154,7 +159,7 @@ func NewOrderBookManager(host_type string) (*OrderBookManager, error) {
 
 // 判斷掉frame情況
 func (obs *OrderBookManager) IsFrameLose(depthUpdate *UpdateDepth, ob *OrderBook) bool{
-	return ob.IsFrameLose(depthUpdate, obs.API.Exchange.HostType)
+	return ob.IsFrameLose(depthUpdate, ob.API.Exchange.HostType)
 }
 
 func (obs *OrderBookManager) Update(rawData []byte, opts ...func(*OrderBookManager)) (data *format.OrderBookStream, err error) {
@@ -171,7 +176,10 @@ func (obs *OrderBookManager) Update(rawData []byte, opts ...func(*OrderBookManag
 			// fmt.Println(depthUpdate)
 		}
 	} else {
-		orderBook := NewOrderBook(depthUpdate.Symbol)
+		orderBook, err := NewOrderBook(depthUpdate.Symbol, obs.Host_type)
+		if err != nil {
+			return nil, err
+		}
 		if orderBook.DataQueue.TryEnqueue(depthUpdate) {
 			// fmt.Println("store success")
 		}
@@ -289,9 +297,12 @@ func (obs *OrderBookManager) StartInitQueue() {
 		if orderbook.IsInit {
 			continue
 		}
-
-		if ok, err := orderbook.ComposeDepth(obs.API) ; !ok {
-			if err.Error() == "request timeout" {
+		time.Sleep(10 * time.Millisecond)
+		if ok, err := orderbook.ComposeDepth(); !ok {
+			orderbook.API.Log.Error(err)
+			if (err.Error() == "request timeout") || 
+			(err.Error() == "no valid depth update") ||
+			(err.Error() == "out of orderbook frame") {
 				obs.Delete(orderbook.Symbol)
 			}
 		}
